@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchNights, formatEUDate } from "@/lib/poker";
 import { Spade, Heart, Diamond, Club, ArrowRight, Users, Coins, CalendarClock } from "lucide-react";
@@ -22,6 +23,57 @@ function greeting() {
   return "Good evening";
 }
 
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return reduced;
+}
+
+/** Cursor-follow spotlight + a slow parallax nudge on the giant watermark suit. */
+function useSpotlight(reduced: boolean) {
+  const onMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (reduced || e.pointerType !== "mouse") return;
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty("--sx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
+    el.style.setProperty("--sy", `${((e.clientY - rect.top) / rect.height) * 100}%`);
+  };
+  return onMove;
+}
+
+/** 3D tilt + a light glare that tracks the pointer, reset smoothly on leave. */
+function useTiltCard(reduced: boolean) {
+  const ref = useRef<HTMLDivElement>(null);
+  const onMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (reduced || e.pointerType !== "mouse") return;
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    const rotateY = (px - 0.5) * 12;
+    const rotateX = (0.5 - py) * 12;
+    el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px)`;
+    el.style.setProperty("--gx", `${px * 100}%`);
+    el.style.setProperty("--gy", `${py * 100}%`);
+    el.style.setProperty("--glare", "1");
+  };
+  const onLeave = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.transform = "";
+    el.style.setProperty("--glare", "0");
+  };
+  return { ref, onMove, onLeave };
+}
+
 // Fixed positions/timings for the rising embers — no per-render randomness.
 const EMBERS = [
   { left: "6%", size: 3, duration: 9, delay: 0, drift: 10 },
@@ -36,13 +88,19 @@ const EMBERS = [
 ];
 
 const SUITS = [
-  { Icon: Spade, dx: -18, dy: -10, dr: -16 },
-  { Icon: Heart, dx: -6, dy: 8, dr: 10 },
-  { Icon: Diamond, dx: 6, dy: -8, dr: -10 },
-  { Icon: Club, dx: 18, dy: 10, dr: 16 },
+  { Icon: Spade, dx: -22, dy: -14, dr: -20 },
+  { Icon: Heart, dx: -8, dy: 10, dr: 12 },
+  { Icon: Diamond, dx: 8, dy: -10, dr: -12 },
+  { Icon: Club, dx: 22, dy: 14, dr: 20 },
 ];
 
+// Angles the chip-burst dots fly out to, in degrees around the icon badge.
+const BURST_ANGLES = [-70, -25, 25, 70, 110, 160];
+
 function HubPage() {
+  const reducedMotion = usePrefersReducedMotion();
+  const onSpotlightMove = useSpotlight(reducedMotion);
+
   const { data: me } = useQuery({
     queryKey: ["me-hub"],
     queryFn: async () => (await supabase.auth.getUser()).data.user,
@@ -75,18 +133,38 @@ function HubPage() {
     "";
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* Ambient backdrop: drifting felt glow + a faint vignette */}
+    <div
+      className="relative min-h-screen overflow-hidden bg-background"
+      onPointerMove={onSpotlightMove}
+      style={{ ["--sx" as string]: "50%", ["--sy" as string]: "20%" }}
+    >
+      {/* Ambient backdrop: drifting felt glow + a faint vignette.
+          No Tailwind translate-* utilities here — the hub-drift keyframe
+          owns `transform` outright (Tailwind's translate-* sets a separate
+          `translate` property that would otherwise stack on top of it). */}
       <div
-        className="animate-hub-drift pointer-events-none absolute left-1/2 top-1/2 h-[70vh] w-[70vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,oklch(0.45_0.12_155_/_0.35),transparent_70%)] blur-2xl"
+        className="animate-hub-drift pointer-events-none absolute left-1/2 top-1/2 h-[70vh] w-[70vh] rounded-full bg-[radial-gradient(circle,oklch(0.45_0.12_155_/_0.35),transparent_70%)] blur-2xl"
         aria-hidden="true"
       />
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,transparent_35%,oklch(0.13_0.01_90_/_0.6)_100%)]"
         aria-hidden="true"
       />
+      {/* Cursor-follow spotlight */}
+      <div
+        className="pointer-events-none absolute inset-0 transition-opacity duration-500"
+        style={{
+          background:
+            "radial-gradient(480px circle at var(--sx) var(--sy), oklch(0.80 0.14 85 / 0.07), transparent 70%)",
+        }}
+        aria-hidden="true"
+      />
       <Spade
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[46rem] w-[46rem] -translate-x-1/2 -translate-y-1/2 text-gold opacity-[0.035]"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[46rem] w-[46rem] text-gold opacity-[0.035] transition-transform duration-500 ease-out"
+        style={{
+          transform:
+            "translate(calc(-50% + (var(--sx) - 50%) * -0.06), calc(-50% + (var(--sy) - 50%) * -0.06))",
+        }}
         aria-hidden="true"
       />
 
@@ -103,7 +181,6 @@ function HubPage() {
               animationDuration: `${e.duration}s`,
               animationDelay: `${e.delay}s`,
               ["--drift" as string]: `${e.drift}px`,
-              transform: `translateX(var(--drift))`,
             }}
           />
         ))}
@@ -114,12 +191,13 @@ function HubPage() {
           {SUITS.map(({ Icon, dx, dy, dr }, i) => (
             <Icon
               key={i}
-              className="animate-deal h-7 w-7 drop-shadow-[0_0_10px_oklch(0.80_0.14_85_/_0.5)] md:h-8 md:w-8"
+              className="animate-suit h-7 w-7 drop-shadow-[0_0_10px_oklch(0.80_0.14_85_/_0.5)] md:h-8 md:w-8"
               style={{
                 ["--dx" as string]: `${dx}px`,
                 ["--dy" as string]: `${dy}px`,
                 ["--dr" as string]: `${dr}deg`,
                 ["--deal-delay" as string]: `${i * 90}ms`,
+                ["--float-delay" as string]: `${480 + i * 90}ms`,
               }}
             />
           ))}
@@ -134,7 +212,7 @@ function HubPage() {
           Where to <span className="text-shimmer">tonight?</span>
         </h1>
 
-        <p className="animate-in fade-in duration-700 mt-3 max-w-lg text-center text-sm text-muted-foreground md:text-base">
+        <p className="animate-in fade-in duration-700 delay-150 mt-3 max-w-lg text-center text-sm text-muted-foreground md:text-base">
           {isAdmin
             ? "Head to the Poker Club to organise nights with the crew, or step into the Casino for live cash tables."
             : "Head to the Poker Club to organise nights with the crew."}
@@ -144,8 +222,12 @@ function HubPage() {
           <Link
             to="/nights/$id"
             params={{ id: nextNight.id }}
-            className="animate-in fade-in duration-700 mt-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-xs font-medium text-gold shadow-[0_0_20px_-6px_oklch(0.80_0.14_85_/_0.5)] transition hover:bg-gold/15"
+            className="animate-in fade-in zoom-in-95 duration-500 delay-300 mt-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-xs font-medium text-gold shadow-[0_0_20px_-6px_oklch(0.80_0.14_85_/_0.5)] transition hover:bg-gold/15"
           >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-gold" />
+            </span>
             <CalendarClock className="h-3.5 w-3.5" />
             Next night: {nextNight.title} · {formatEUDate(nextNight.starts_at)}
           </Link>
@@ -153,11 +235,9 @@ function HubPage() {
 
         <div
           className={
-            "animate-in fade-in slide-in-from-bottom-3 duration-700 " +
-            (isAdmin
-              ? "mt-12 grid w-full gap-6 md:grid-cols-2"
-              : "mt-12 grid w-full max-w-md gap-6")
+            isAdmin ? "mt-12 grid w-full gap-6 md:grid-cols-2" : "mt-12 grid w-full max-w-md gap-6"
           }
+          style={{ perspective: 1200 }}
         >
           <HubCard
             to="/dashboard"
@@ -167,6 +247,9 @@ function HubPage() {
             title="Poker Club"
             description="Schedule nights, RSVP, log results, and track the leaderboard with your regulars."
             cta="Enter the club"
+            entrance="slide-in-from-left-10"
+            delay="delay-500"
+            reducedMotion={reducedMotion}
           />
 
           {isAdmin && (
@@ -178,6 +261,9 @@ function HubPage() {
               title="Casino"
               description="Live poker and blackjack tables with chips, cashier and settlements."
               cta="Enter the casino"
+              entrance="slide-in-from-right-10"
+              delay="delay-700"
+              reducedMotion={reducedMotion}
             />
           )}
         </div>
@@ -194,6 +280,9 @@ function HubCard({
   title,
   description,
   cta,
+  entrance,
+  delay,
+  reducedMotion,
 }: {
   to: string;
   Icon: typeof Users;
@@ -202,13 +291,33 @@ function HubCard({
   title: string;
   description: string;
   cta: string;
+  entrance: string;
+  delay: string;
+  reducedMotion: boolean;
 }) {
+  const { ref, onMove, onLeave } = useTiltCard(reducedMotion);
+
   return (
     <Link
       to={to}
-      className="group relative rounded-[28px] bg-gradient-to-b from-gold/25 via-border/40 to-transparent p-px transition duration-300 hover:from-gold/60 hover:shadow-gold focus-visible:from-gold/60 focus-visible:shadow-gold focus-visible:outline-none"
+      className={`animate-in fade-in ${entrance} ${delay} group relative block rounded-[28px] bg-gradient-to-b from-gold/25 via-border/40 to-transparent p-px duration-700 transition hover:from-gold/60 hover:shadow-gold focus-visible:from-gold/60 focus-visible:shadow-gold focus-visible:outline-none active:scale-[0.985]`}
     >
-      <div className="card-felt relative overflow-hidden rounded-[27px] p-7 transition duration-300 group-hover:-translate-y-1.5 md:p-8">
+      <div
+        ref={ref}
+        onPointerMove={onMove}
+        onPointerLeave={onLeave}
+        className="card-felt relative overflow-hidden rounded-[27px] p-7 transition-transform duration-200 ease-out will-change-transform md:p-8"
+        style={{ ["--glare" as string]: 0 }}
+      >
+        {/* Pointer-tracked glare */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[var(--glare,0)] transition-opacity duration-300"
+          style={{
+            background:
+              "radial-gradient(220px circle at var(--gx,50%) var(--gy,50%), oklch(0.97 0.03 90 / 0.16), transparent 60%)",
+          }}
+          aria-hidden="true"
+        />
         {/* Diagonal shine sweep */}
         <span
           aria-hidden="true"
@@ -221,8 +330,25 @@ function HubCard({
         />
 
         <div className="relative">
-          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[radial-gradient(circle_at_30%_30%,oklch(0.88_0.13_90),oklch(0.72_0.16_75))] text-[oklch(0.12_0.02_90)] shadow-gold ring-1 ring-gold/40 transition duration-300 group-hover:scale-110 group-hover:rotate-3">
-            <Icon className="h-7 w-7" />
+          <div className="relative mb-5 flex h-14 w-14 items-center justify-center">
+            <div className="animate-badge-glow absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_30%_30%,oklch(0.88_0.13_90),oklch(0.72_0.16_75))] ring-1 ring-gold/40 transition duration-300 group-hover:scale-110 group-hover:rotate-3" />
+            <Icon className="relative h-7 w-7 text-[oklch(0.12_0.02_90)]" />
+            {BURST_ANGLES.map((angle, i) => {
+              const rad = (angle * Math.PI) / 180;
+              const bx = Math.cos(rad) * 48;
+              const by = Math.sin(rad) * 48;
+              return (
+                <span
+                  key={i}
+                  className="pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 rounded-full bg-[oklch(0.97_0.03_90)] opacity-0 shadow-[0_0_6px_1px_oklch(0.80_0.14_85_/_0.8)] group-hover:animate-chip-burst"
+                  style={{
+                    ["--bx" as string]: `${bx}px`,
+                    ["--by" as string]: `${by}px`,
+                    animationDelay: `${i * 35}ms`,
+                  }}
+                />
+              );
+            })}
           </div>
           <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             {eyebrow}
