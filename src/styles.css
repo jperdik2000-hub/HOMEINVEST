@@ -235,19 +235,58 @@
   animation: bj-target-pulse 1.2s ease-in-out infinite;
 }
 
+/* ----- Hub ambience: drifting spotlight, shimmering title, rising embers,
+   and a diagonal shine sweep on the choice cards. ----- */
+@keyframes hub-drift {
+  0%, 100% { transform: translate(-50%, -55%) scale(1); }
+  50%      { transform: translate(-46%, -50%) scale(1.12); }
+}
+@utility animate-hub-drift {
+  animation: hub-drift 16s ease-in-out infinite;
+}
+
+@keyframes hub-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@utility text-shimmer {
+  background-image: linear-gradient(100deg, var(--gold) 30%, oklch(0.97 0.03 90) 50%, var(--gold) 70%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: hub-shimmer 6s linear infinite;
+}
+
+@keyframes ember-rise {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 0.8; }
+  100% { transform: translateY(-140px) scale(1); opacity: 0; }
+}
+@utility animate-ember {
+  animation: ember-rise linear infinite;
+}
+
 /* Reduced-motion: honour system preference and an in-app toggle. Kills the
    card slide, pulses, and target halo but keeps opacity fades so state
    changes (new card, active seat) are still perceivable. */
 @media (prefers-reduced-motion: reduce) {
   .animate-bj-deal,
   .animate-next-target,
-  .animate-pulse {
+  .animate-pulse,
+  .animate-hub-drift,
+  .animate-ember,
+  .text-shimmer {
     animation: none !important;
   }
 }
 .reduce-motion .animate-bj-deal,
 .reduce-motion .animate-next-target,
-.reduce-motion .animate-pulse {
+.reduce-motion .animate-pulse,
+.reduce-motion .animate-hub-drift,
+.reduce-motion .animate-ember,
+.reduce-motion .text-shimmer {
   animation: none !important;
 }
 .reduce-motion .chip-floater {
