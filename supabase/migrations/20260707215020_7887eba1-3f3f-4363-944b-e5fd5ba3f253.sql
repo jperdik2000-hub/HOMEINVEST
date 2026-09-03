@@ -1,0 +1,1 @@
+CREATE POLICY "Service role manages reminder_log" ON public.reminder_log FOR ALL TO public USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');

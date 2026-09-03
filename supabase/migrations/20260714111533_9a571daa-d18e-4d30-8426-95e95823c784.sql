@@ -1,0 +1,1 @@
+ALTER TABLE public.blackjack_seats DROP CONSTRAINT blackjack_seats_table_id_user_id_key;

@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Any signed-in user can create a night" ON public.poker_nights;

@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.notify_admins_new_user() FROM PUBLIC, anon, authenticated;

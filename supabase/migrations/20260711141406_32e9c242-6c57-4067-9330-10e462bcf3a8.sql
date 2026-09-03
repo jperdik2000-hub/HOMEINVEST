@@ -1,0 +1,1 @@
+UPDATE public.poker_wallets SET chips = 100000 WHERE user_id = 'cf380656-acc1-4e64-9fe7-ebe353f156b9';

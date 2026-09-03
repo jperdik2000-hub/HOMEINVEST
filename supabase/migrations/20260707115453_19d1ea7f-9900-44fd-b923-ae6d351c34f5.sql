@@ -1,0 +1,1 @@
+ALTER TABLE public.poker_nights ADD COLUMN IF NOT EXISTS started_at TIMESTAMPTZ;

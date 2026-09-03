@@ -1,0 +1,1 @@
+ALTER TABLE public.poker_wallet_transactions DROP CONSTRAINT IF EXISTS poker_wallet_transactions_table_id_fkey;

@@ -1,0 +1,1 @@
+ALTER TABLE public.poker_nights ALTER COLUMN currency SET DEFAULT 'EUR';

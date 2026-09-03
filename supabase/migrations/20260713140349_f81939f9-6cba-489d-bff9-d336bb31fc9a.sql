@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.poker_table_rigs;

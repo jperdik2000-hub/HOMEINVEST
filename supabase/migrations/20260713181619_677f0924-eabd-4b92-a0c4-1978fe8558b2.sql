@@ -1,0 +1,2 @@
+ALTER TABLE public.poker_seats
+  ADD COLUMN IF NOT EXISTS time_bank_seconds INTEGER NOT NULL DEFAULT 30;

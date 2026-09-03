@@ -1,0 +1,24 @@
+{
+  "name": "Poker Club",
+  "short_name": "Poker Club",
+  "description": "Private poker game dashboard for you and your crew.",
+  "start_url": "/hub",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/poker-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/poker-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

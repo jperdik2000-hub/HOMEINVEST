@@ -1,0 +1,1 @@
+ALTER TYPE public.settlement_source ADD VALUE IF NOT EXISTS 'dice';

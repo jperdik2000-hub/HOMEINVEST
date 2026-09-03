@@ -1,0 +1,2 @@
+ALTER TABLE public.blackjack_rounds DROP CONSTRAINT IF EXISTS blackjack_rounds_status_check;
+ALTER TABLE public.blackjack_rounds ADD CONSTRAINT blackjack_rounds_status_check CHECK (status IN ('betting','dealing','player','dealer','settled'));

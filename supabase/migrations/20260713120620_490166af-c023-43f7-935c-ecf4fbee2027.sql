@@ -1,0 +1,2 @@
+ALTER TABLE public.poker_wallet_transactions DROP CONSTRAINT poker_wallet_transactions_kind_check;
+ALTER TABLE public.poker_wallet_transactions ADD CONSTRAINT poker_wallet_transactions_kind_check CHECK (kind = ANY (ARRAY['deposit'::text, 'buy_in'::text, 'cashout'::text, 'settlement'::text, 'adjust'::text, 'withdrawal'::text, 'settlement_confirmed'::text]));

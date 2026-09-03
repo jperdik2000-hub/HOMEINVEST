@@ -1,0 +1,255 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-felt: var(--felt);
+  --color-felt-deep: var(--felt-deep);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --font-display: "Playfair Display", ui-serif, Georgia, serif;
+}
+
+:root {
+  /* High-stakes private casino palette */
+  --radius: 0.75rem;
+  --background: oklch(0.13 0.01 90);
+  --foreground: oklch(0.97 0.01 90);
+  --card: oklch(0.18 0.02 150 / 0.92);
+  --card-foreground: oklch(0.97 0.01 90);
+  --popover: oklch(0.16 0.02 150);
+  --popover-foreground: oklch(0.97 0.01 90);
+  --primary: oklch(0.80 0.14 85); /* gold */
+  --primary-foreground: oklch(0.12 0.02 90);
+  --secondary: oklch(0.24 0.04 155);
+  --secondary-foreground: oklch(0.97 0.01 90);
+  --muted: oklch(0.22 0.03 150);
+  --muted-foreground: oklch(0.70 0.02 100);
+  --accent: oklch(0.45 0.12 155); /* felt-lit accent */
+  --accent-foreground: oklch(0.98 0.01 90);
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 90);
+  --border: oklch(0.28 0.04 150 / 0.7);
+  --input: oklch(0.22 0.04 150);
+  --ring: oklch(0.80 0.14 85);
+  --chart-1: oklch(0.80 0.14 85);
+  --chart-2: oklch(0.55 0.15 155);
+  --chart-3: oklch(0.70 0.18 25);
+  --chart-4: oklch(0.75 0.10 200);
+  --chart-5: oklch(0.65 0.20 320);
+  --sidebar: oklch(0.15 0.02 150);
+  --sidebar-foreground: oklch(0.97 0.01 90);
+  --sidebar-primary: oklch(0.80 0.14 85);
+  --sidebar-primary-foreground: oklch(0.12 0.02 90);
+  --sidebar-accent: oklch(0.24 0.04 155);
+  --sidebar-accent-foreground: oklch(0.97 0.01 90);
+  --sidebar-border: oklch(0.28 0.04 150 / 0.7);
+  --sidebar-ring: oklch(0.80 0.14 85);
+
+  --felt: oklch(0.28 0.09 155);
+  --felt-deep: oklch(0.15 0.05 155);
+  --gold: oklch(0.80 0.14 85);
+  --gold-foreground: oklch(0.12 0.02 90);
+  --red: oklch(0.58 0.22 25);
+
+  --gradient-felt: radial-gradient(ellipse at 50% 20%, oklch(0.34 0.11 155) 0%, oklch(0.18 0.06 155) 55%, oklch(0.12 0.03 150) 100%);
+  --gradient-gold: linear-gradient(135deg, oklch(0.88 0.13 90) 0%, oklch(0.72 0.16 75) 100%);
+  --shadow-gold: 0 10px 40px -10px oklch(0.82 0.15 85 / 0.35);
+  --shadow-card: 0 24px 80px -24px oklch(0 0 0 / 0.65);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse 70% 50% at 50% -5%, oklch(0.30 0.09 155 / 0.25), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 100% 100%, oklch(0.80 0.14 85 / 0.06), transparent 60%),
+      var(--color-background);
+    color: var(--color-foreground);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+  }
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+@utility bg-felt {
+  background-image: var(--gradient-felt);
+}
+@utility bg-gold {
+  background-image: var(--gradient-gold);
+  color: var(--gold-foreground);
+}
+@utility text-gold {
+  color: var(--gold);
+}
+@utility text-red {
+  color: var(--red);
+}
+@utility shadow-gold {
+  box-shadow: var(--shadow-gold);
+}
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
+}
+@utility card-felt {
+  background: linear-gradient(180deg, oklch(0.20 0.03 150 / 0.95), oklch(0.14 0.02 150 / 0.95));
+  border: 1px solid oklch(0.30 0.04 150 / 0.7);
+  backdrop-filter: blur(8px);
+}
+@utility chip-ring {
+  background: radial-gradient(circle, oklch(0.80 0.14 85) 0 40%, oklch(0.18 0.03 150) 41% 55%, oklch(0.80 0.14 85) 56% 65%, oklch(0.18 0.03 150) 66% 80%, oklch(0.80 0.14 85) 81% 100%);
+}
+
+/* ----- Live poker animations ----- */
+@keyframes deal-in {
+  0%   { transform: translate(var(--dx, 0), var(--dy, 0)) scale(0.35) rotate(var(--dr, -14deg)); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: translate(0, 0) scale(1) rotate(0); opacity: 1; }
+}
+@utility animate-deal {
+  animation: deal-in 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: var(--deal-delay, 0ms);
+  will-change: transform, opacity;
+}
+
+@keyframes chip-in {
+  0%   { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  70%  { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+@utility animate-chip-in {
+  animation: chip-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes chip-bump {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%      { transform: translate(-50%, -50%) scale(1.18); }
+}
+@utility animate-chip-bump {
+  animation: chip-bump 320ms ease-out;
+}
+
+@keyframes pot-pop {
+  0%   { transform: scale(1); color: white; }
+  40%  { transform: scale(1.22); color: var(--gold); text-shadow: 0 0 18px oklch(0.82 0.15 85 / 0.6); }
+  100% { transform: scale(1); color: white; }
+}
+@utility animate-pot-pop {
+  animation: pot-pop 620ms ease-out;
+}
+
+/* Chip sweep floater: mounted at seat position (via inline left/top), then
+   transitioned toward center (50%,50%) by adding the .sweep-to-center class. */
+@utility chip-floater {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: left 700ms cubic-bezier(0.4, 0.1, 0.2, 1),
+              top 700ms cubic-bezier(0.4, 0.1, 0.2, 1),
+              opacity 700ms ease-out,
+              scale 700ms ease-out;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Blackjack: card dealt from dealer's shoe, sliding down/right into the
+   fanned hand at the correct overlapping position. Applied only to the
+   newest card in a FannedHand — existing cards stay put. */
+@keyframes bj-deal-in {
+  0%   { transform: translate(-30px, -240px) rotate(-35deg); opacity: 0; }
+  35%  { opacity: 1; }
+  100% { transform: translate(0, 0) rotate(0); opacity: 1; }
+}
+@utility animate-bj-deal {
+  animation: bj-deal-in 520ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* Next-card target: bright ring + soft pulsing halo so players always know
+   which seat (or the dealer) is about to receive the next card. */
+@keyframes bj-target-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.55), 0 0 24px 4px rgba(251, 191, 36, 0.35); }
+  50%      { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0),    0 0 32px 10px rgba(251, 191, 36, 0.55); }
+}
+@utility animate-next-target {
+  animation: bj-target-pulse 1.2s ease-in-out infinite;
+}
+
+/* Reduced-motion: honour system preference and an in-app toggle. Kills the
+   card slide, pulses, and target halo but keeps opacity fades so state
+   changes (new card, active seat) are still perceivable. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-bj-deal,
+  .animate-next-target,
+  .animate-pulse {
+    animation: none !important;
+  }
+}
+.reduce-motion .animate-bj-deal,
+.reduce-motion .animate-next-target,
+.reduce-motion .animate-pulse {
+  animation: none !important;
+}
+.reduce-motion .chip-floater {
+  transition: none !important;
+}

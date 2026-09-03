@@ -1,0 +1,1 @@
+DELETE FROM public.player_results WHERE night_id IN (SELECT id FROM public.poker_nights WHERE notes = 'Demo data' AND title LIKE 'Demo Night %'); DELETE FROM public.poker_nights WHERE notes = 'Demo data' AND title LIKE 'Demo Night %';
