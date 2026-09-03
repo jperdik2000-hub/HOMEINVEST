@@ -20,9 +20,7 @@ function UsersPage() {
   const profiles = useQuery({ queryKey: ["profiles"], queryFn: fetchProfiles });
   const list = (profiles.data ?? [])
     .slice()
-    .sort((a, b) =>
-      (a.nickname || a.name || "").localeCompare(b.nickname || b.name || ""),
-    );
+    .sort((a, b) => (a.nickname || a.name || "").localeCompare(b.nickname || b.name || ""));
 
   const [isAdmin, setIsAdmin] = useState(false);
   useEffect(() => {
@@ -57,7 +55,7 @@ function UsersPage() {
 
   return (
     <AppShell>
-      <div className="mb-6">
+      <div className="animate-in fade-in duration-500 mb-6">
         <h1 className="font-display text-3xl font-bold md:text-4xl">Users</h1>
         <p className="text-sm text-muted-foreground">
           {list.length} member{list.length === 1 ? "" : "s"} with an account.
@@ -71,11 +69,12 @@ function UsersPage() {
             if (!email.trim()) return;
             mutation.mutate(email.trim());
           }}
-          className="card-felt shadow-card mb-6 rounded-2xl p-4"
+          className="card-felt shadow-card animate-in fade-in duration-500 mb-6 rounded-2xl p-4"
         >
           <div className="mb-2 text-sm font-medium">Invite a new player</div>
           <p className="mb-3 text-xs text-muted-foreground">
-            Sign-ups are closed. New accounts can only be created from an invite email you send here.
+            Sign-ups are closed. New accounts can only be created from an invite email you send
+            here.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
@@ -99,13 +98,13 @@ function UsersPage() {
           No users yet.
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="animate-in fade-in duration-500 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((p) => (
             <Link
               key={p.id}
               to="/players/$id"
               params={{ id: p.id }}
-              className="card-felt shadow-card rounded-2xl p-4 transition hover:border-gold/60"
+              className="card-felt shadow-card rounded-2xl p-4 transition duration-200 hover:-translate-y-0.5 hover:border-gold/60"
             >
               <div className="flex items-center gap-3">
                 <Avatar url={p.avatar_url} />
@@ -153,7 +152,11 @@ function Avatar({ url }: { url: string | null | undefined }) {
       className="chip-ring flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-gold"
       style={
         src
-          ? { backgroundImage: `url(${src})`, backgroundSize: "cover", backgroundPosition: "center" }
+          ? {
+              backgroundImage: `url(${src})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }
           : undefined
       }
     >

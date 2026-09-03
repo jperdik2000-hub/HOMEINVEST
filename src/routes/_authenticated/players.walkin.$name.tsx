@@ -2,7 +2,15 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
 import { AppShell } from "@/components/AppShell";
-import { AWARDS, fetchAllResults, fetchNights, fetchProfiles, formatDisplayName, formatEUDate, formatMoney } from "@/lib/poker";
+import {
+  AWARDS,
+  fetchAllResults,
+  fetchNights,
+  fetchProfiles,
+  formatDisplayName,
+  formatEUDate,
+  formatMoney,
+} from "@/lib/poker";
 import { Award, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,12 +37,19 @@ function WalkinPlayer() {
   const profiles = useQuery({ queryKey: ["profiles"], queryFn: fetchProfiles });
 
   const [me, setMe] = useState<string | null>(null);
-  useEffect(() => { supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null)); }, []);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));
+  }, []);
   const isAdminQ = useQuery({
     queryKey: ["is-admin", me],
     enabled: !!me,
     queryFn: async () => {
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", me!).eq("role", "admin").maybeSingle();
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", me!)
+        .eq("role", "admin")
+        .maybeSingle();
       return !!data;
     },
   });
@@ -47,21 +62,31 @@ function WalkinPlayer() {
   const [busy, setBusy] = useState<"link" | "invite" | null>(null);
 
   async function handleLink() {
-    if (!selectedUser) { toast.error("Pick a registered player"); return; }
+    if (!selectedUser) {
+      toast.error("Pick a registered player");
+      return;
+    }
     setBusy("link");
     try {
       const res = await linkFn({ data: { walkinName: decoded, userId: selectedUser } });
-      toast.success(`Linked ${res.linkedCount} past game${res.linkedCount === 1 ? "" : "s"} to that player`);
+      toast.success(
+        `Linked ${res.linkedCount} past game${res.linkedCount === 1 ? "" : "s"} to that player`,
+      );
       await qc.invalidateQueries({ queryKey: ["results"] });
       navigate({ to: "/players/$id", params: { id: res.userId } });
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to link");
-    } finally { setBusy(null); }
+    } finally {
+      setBusy(null);
+    }
   }
 
   async function handleInvite() {
     const email = inviteEmail.trim().toLowerCase();
-    if (!email) { toast.error("Enter an email"); return; }
+    if (!email) {
+      toast.error("Enter an email");
+      return;
+    }
     setBusy("invite");
     try {
       await inviteFn({ data: { email } });
@@ -69,15 +94,16 @@ function WalkinPlayer() {
       setInviteEmail("");
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to invite");
-    } finally { setBusy(null); }
+    } finally {
+      setBusy(null);
+    }
   }
 
   const mine = useMemo(
     () =>
       (results.data ?? []).filter(
         (r: any) =>
-          !r.user_id &&
-          (r.player_name || "").trim().toLowerCase() === decoded.trim().toLowerCase(),
+          !r.user_id && (r.player_name || "").trim().toLowerCase() === decoded.trim().toLowerCase(),
       ),
     [results.data, decoded],
   );
@@ -88,13 +114,15 @@ function WalkinPlayer() {
   const worst = mine.length ? Math.min(...mine.map((r: any) => Number(r.net_result))) : 0;
   const awards = mine.filter((r: any) => r.award).map((r: any) => r.award!);
 
-  const registered = (profiles.data ?? []).slice().sort((a, b) =>
-    formatDisplayName(a.name, a.nickname).localeCompare(formatDisplayName(b.name, b.nickname)),
-  );
+  const registered = (profiles.data ?? [])
+    .slice()
+    .sort((a, b) =>
+      formatDisplayName(a.name, a.nickname).localeCompare(formatDisplayName(b.name, b.nickname)),
+    );
 
   return (
     <AppShell>
-      <div className="mb-6 flex items-center gap-4">
+      <div className="animate-in fade-in duration-500 mb-6 flex items-center gap-4">
         <div className="chip-ring flex h-16 w-16 shrink-0 items-center justify-center rounded-full shadow-gold">
           <Users className="h-6 w-6" />
         </div>
@@ -104,7 +132,7 @@ function WalkinPlayer() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="animate-in fade-in duration-500 grid gap-4 md:grid-cols-4">
         <Stat label="Games played" value={String(mine.length)} />
         <Stat label="Total P&L" value={formatMoney(total)} tone={total >= 0 ? "up" : "down"} />
         <Stat label="Avg / night" value={formatMoney(avg)} tone={avg >= 0 ? "up" : "down"} />
@@ -120,7 +148,8 @@ function WalkinPlayer() {
             Convert to registered player
           </div>
           <p className="mb-4 text-xs text-muted-foreground">
-            Admin only. Link this walk-in's past games to a real account so future stats stack together.
+            Admin only. Link this walk-in's past games to a real account so future stats stack
+            together.
           </p>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -138,8 +167,14 @@ function WalkinPlayer() {
                   </option>
                 ))}
               </select>
-              <Button onClick={handleLink} disabled={busy !== null || !selectedUser} className="w-full">
-                {busy === "link" ? "Linking…" : `Link ${mine.length} past game${mine.length === 1 ? "" : "s"}`}
+              <Button
+                onClick={handleLink}
+                disabled={busy !== null || !selectedUser}
+                className="w-full"
+              >
+                {busy === "link"
+                  ? "Linking…"
+                  : `Link ${mine.length} past game${mine.length === 1 ? "" : "s"}`}
               </Button>
             </div>
 
@@ -163,7 +198,8 @@ function WalkinPlayer() {
                 {busy === "invite" ? "Sending…" : "Send invite"}
               </Button>
               <p className="mt-2 text-[11px] text-muted-foreground">
-                After they create their account, come back here and link the walk-in to their profile.
+                After they create their account, come back here and link the walk-in to their
+                profile.
               </p>
             </div>
           </div>
@@ -179,28 +215,45 @@ function WalkinPlayer() {
             </div>
           ) : (
             <ul className="space-y-2 text-sm">
-              {mine.slice(-10).reverse().map((r: any) => {
-                const n = nights.data?.find((x: any) => x.id === r.night_id);
-                return (
-                  <li key={r.id} className="flex items-center justify-between rounded-md bg-background/30 px-3 py-2">
-                    <div>
+              {mine
+                .slice(-10)
+                .reverse()
+                .map((r: any) => {
+                  const n = nights.data?.find((x: any) => x.id === r.night_id);
+                  return (
+                    <li
+                      key={r.id}
+                      className="flex items-center justify-between rounded-md bg-background/30 px-3 py-2 transition-colors duration-150 hover:bg-background/50"
+                    >
                       <div>
-                        {n ? (
-                          <Link to="/nights/$id" params={{ id: n.id }} className="hover:text-gold">
-                            {n.title ?? "Poker game"}
-                          </Link>
-                        ) : (
-                          "Poker game"
-                        )}
+                        <div>
+                          {n ? (
+                            <Link
+                              to="/nights/$id"
+                              params={{ id: n.id }}
+                              className="hover:text-gold"
+                            >
+                              {n.title ?? "Poker game"}
+                            </Link>
+                          ) : (
+                            "Poker game"
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {n && formatEUDate(n.starts_at)}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">{n && formatEUDate(n.starts_at)}</div>
-                    </div>
-                    <div className={"font-mono " + (Number(r.net_result) >= 0 ? "text-emerald-400" : "text-red-400")}>
-                      {formatMoney(Number(r.net_result), n?.currency)}
-                    </div>
-                  </li>
-                );
-              })}
+                      <div
+                        className={
+                          "font-mono tabular-nums " +
+                          (Number(r.net_result) >= 0 ? "text-emerald-400" : "text-red-400")
+                        }
+                      >
+                        {formatMoney(Number(r.net_result), n?.currency)}
+                      </div>
+                    </li>
+                  );
+                })}
             </ul>
           )}
         </div>
@@ -215,7 +268,10 @@ function WalkinPlayer() {
           ) : (
             <div className="flex flex-wrap gap-2">
               {awards.map((a: string, i: number) => (
-                <span key={i} className="rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs text-gold">
+                <span
+                  key={i}
+                  className="rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs text-gold"
+                >
                   {AWARDS.find((x) => x.value === a)?.label ?? a}
                 </span>
               ))}
@@ -229,9 +285,18 @@ function WalkinPlayer() {
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "up" | "down" }) {
   return (
-    <div className="card-felt rounded-2xl p-4">
+    <div className="card-felt rounded-2xl p-4 transition-colors duration-200 hover:border-gold/25">
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={"mt-1 font-mono text-xl " + (tone === "up" ? "text-emerald-400" : tone === "down" ? "text-red-400" : "text-foreground")}>
+      <div
+        className={
+          "mt-1 font-mono text-xl tabular-nums " +
+          (tone === "up"
+            ? "text-emerald-400"
+            : tone === "down"
+              ? "text-red-400"
+              : "text-foreground")
+        }
+      >
         {value}
       </div>
     </div>

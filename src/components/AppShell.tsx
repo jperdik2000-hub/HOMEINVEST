@@ -1,7 +1,18 @@
 import { Link, useNavigate, useRouterState, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, type ReactNode } from "react";
-import { LogOut, LayoutDashboard, Trophy, User, History as HistoryIcon, Spade, Heart, Bell, Users, Scale } from "lucide-react";
+import {
+  LogOut,
+  LayoutDashboard,
+  Trophy,
+  User,
+  History as HistoryIcon,
+  Spade,
+  Heart,
+  Bell,
+  Users,
+  Scale,
+} from "lucide-react";
 import { Loader2, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
@@ -63,18 +74,35 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [queryClient]);
   const [userId, setUserId] = useState<string | null>(null);
-  useEffect(() => { supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null)); }, []);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
   const { data: isAdmin } = useQuery({
     queryKey: ["is-admin", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId!).eq("role", "admin").maybeSingle();
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId!)
+        .eq("role", "admin")
+        .maybeSingle();
       return !!data;
     },
   });
   const { data: bellItems } = useQuery({
     queryKey: ["notifications", "bell", "game-time-v2"],
-    queryFn: () => listFn() as Promise<Array<{ id: string; title: string; body: string; url: string | null; read_at: string | null; created_at: string }>>,
+    queryFn: () =>
+      listFn() as Promise<
+        Array<{
+          id: string;
+          title: string;
+          body: string;
+          url: string | null;
+          read_at: string | null;
+          created_at: string;
+        }>
+      >,
     enabled: bellOpen,
     staleTime: 0,
   });
@@ -90,12 +118,26 @@ export function AppShell({ children }: { children: ReactNode }) {
     supabase.auth.getUser().then(async ({ data }) => {
       const u = data.user;
       if (!u) return;
-      setDisplayName((u.user_metadata?.nickname as string) || (u.user_metadata?.name as string) || u.email || "");
-      const { data: prof } = await supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle();
+      setDisplayName(
+        (u.user_metadata?.nickname as string) || (u.user_metadata?.name as string) || u.email || "",
+      );
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", u.id)
+        .maybeSingle();
       const raw = prof?.avatar_url ?? "";
-      if (!raw) { setAvatarUrl(""); return; }
-      if (/^https?:\/\//i.test(raw)) { setAvatarUrl(raw); return; }
-      const { data: signed } = await supabase.storage.from("avatars").createSignedUrl(raw, 60 * 60 * 24 * 7);
+      if (!raw) {
+        setAvatarUrl("");
+        return;
+      }
+      if (/^https?:\/\//i.test(raw)) {
+        setAvatarUrl(raw);
+        return;
+      }
+      const { data: signed } = await supabase.storage
+        .from("avatars")
+        .createSignedUrl(raw, 60 * 60 * 24 * 7);
       setAvatarUrl(signed?.signedUrl ?? "");
     });
   }, []);
@@ -129,14 +171,22 @@ export function AppShell({ children }: { children: ReactNode }) {
   ] as const;
 
   return (
-    <div className="min-h-screen">
+    <div className="relative min-h-screen">
+      <div
+        className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_60%_100%_at_50%_0%,oklch(0.34_0.11_155_/_0.16),transparent_75%)]"
+        aria-hidden="true"
+      />
       <div
         aria-hidden={pull === 0 && !refreshing}
         className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center md:hidden"
         style={{
           transform: `translateY(${refreshing ? 24 : Math.min(pull, 80) - 40}px)`,
           opacity: refreshing ? 1 : Math.min(1, pull / threshold),
-          transition: refreshing ? "transform 200ms ease" : pull === 0 ? "transform 200ms ease, opacity 200ms ease" : "none",
+          transition: refreshing
+            ? "transform 200ms ease"
+            : pull === 0
+              ? "transform 200ms ease, opacity 200ms ease"
+              : "none",
         }}
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background/90 shadow-card ring-1 ring-border/60 backdrop-blur">
@@ -150,28 +200,37 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
         </div>
       </div>
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/75 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center">
-              <Spade className="h-5 w-5 text-gold" />
-              <Heart className="h-5 w-5 text-gold -ml-1" />
+          <Link to="/dashboard" className="group flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center text-gold transition-transform duration-300 group-hover:scale-110">
+              <Spade className="h-5 w-5" />
+              <Heart className="h-5 w-5 -ml-1" />
             </div>
             <span className="font-display text-lg font-bold">Poker Club</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
-            {nav.map((n) => (
-              <Link key={n.to} to={n.to}>
-                <Button variant={pathname.startsWith(n.to) ? "secondary" : "ghost"} size="sm" className="relative">
-                  <n.icon className="mr-1 h-4 w-4" /> {n.label}
-                  {"badge" in n && (n as any).badge > 0 && (
-                    <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-bold text-background shadow-gold">
-                      {(n as any).badge > 9 ? "9+" : (n as any).badge}
-                    </span>
-                  )}
-                </Button>
-              </Link>
-            ))}
+            {nav.map((n) => {
+              const active = pathname.startsWith(n.to);
+              return (
+                <Link key={n.to} to={n.to} className="relative">
+                  <Button variant={active ? "secondary" : "ghost"} size="sm" className="relative">
+                    <n.icon className="mr-1 h-4 w-4" /> {n.label}
+                    {"badge" in n && (n as any).badge > 0 && (
+                      <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-bold text-background shadow-gold">
+                        {(n as any).badge > 9 ? "9+" : (n as any).badge}
+                      </span>
+                    )}
+                  </Button>
+                  <span
+                    className={
+                      "pointer-events-none absolute inset-x-3 -bottom-[13px] h-0.5 rounded-full bg-gold shadow-gold transition-opacity duration-300 " +
+                      (active ? "opacity-100" : "opacity-0")
+                    }
+                  />
+                </Link>
+              );
+            })}
           </nav>
           <div className="flex items-center gap-2">
             {isAdmin && (
@@ -212,14 +271,21 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <Bell className="h-4 w-4 text-gold" /> Notifications
                   </div>
                   {unreadCount > 0 && (
-                    <Button variant="ghost" size="sm" onClick={() => markAll.mutate()} disabled={markAll.isPending}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => markAll.mutate()}
+                      disabled={markAll.isPending}
+                    >
                       Mark all read
                     </Button>
                   )}
                 </div>
                 <div className="max-h-96 overflow-y-auto">
                   {!bellItems && (
-                    <div className="px-3 py-6 text-center text-sm text-muted-foreground">Loading…</div>
+                    <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                      Loading…
+                    </div>
                   )}
                   {bellItems && bellItems.length === 0 && (
                     <div className="px-3 py-6 text-center text-sm text-muted-foreground">
@@ -238,7 +304,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                           className="block w-full px-3 py-2 text-left hover:bg-muted/40"
                         >
                           <div className="text-sm font-semibold">{n.title}</div>
-                          <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.body}</div>
+                          <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                            {n.body}
+                          </div>
                           <div className="mt-1 text-[10px] text-muted-foreground">
                             {new Date(n.created_at).toLocaleString(undefined, {
                               day: "numeric",
@@ -266,11 +334,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link to="/profile" className="hidden md:block">
               <Button variant="ghost" size="sm">
                 {avatarUrl ? (
-                <span
-                  className="mr-0.5 inline-block h-6 w-6 rounded-full border border-border/60 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${avatarUrl})` }}
-                  aria-hidden
-                />
+                  <span
+                    className="mr-0.5 inline-block h-6 w-6 rounded-full border border-border/60 bg-cover bg-center transition-[box-shadow] duration-200 hover:shadow-gold"
+                    style={{ backgroundImage: `url(${avatarUrl})` }}
+                    aria-hidden
+                  />
                 ) : (
                   <User className="mr-1 h-4 w-4" />
                 )}
@@ -280,7 +348,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link to="/profile" className="md:hidden" aria-label="Profile">
               {avatarUrl ? (
                 <span
-                  className="inline-block h-8 w-8 rounded-full border border-border/60 bg-cover bg-center"
+                  className="inline-block h-8 w-8 rounded-full border border-border/60 bg-cover bg-center transition-[box-shadow] duration-200 hover:shadow-gold"
                   style={{ backgroundImage: `url(${avatarUrl})` }}
                 />
               ) : (
@@ -289,13 +357,19 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </Button>
               )}
             </Link>
-            <Button variant="ghost" size="icon" onClick={signOut} title="Sign out"><LogOut className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={signOut} title="Sign out">
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
         <nav className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-4 pb-3 md:hidden">
           {nav.map((n) => (
             <Link key={n.to} to={n.to}>
-              <Button variant={pathname.startsWith(n.to) ? "secondary" : "ghost"} size="sm" className="relative">
+              <Button
+                variant={pathname.startsWith(n.to) ? "secondary" : "ghost"}
+                size="sm"
+                className="relative"
+              >
                 <n.icon className="mr-1 h-4 w-4" /> {n.label}
                 {"badge" in n && (n as any).badge > 0 && (
                   <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-bold text-background shadow-gold">

@@ -11,7 +11,9 @@ export const Route = createFileRoute("/_authenticated/play/account")({
   component: CasinoAccountPage,
   errorComponent: ({ error }) => (
     <CasinoShell>
-      <div role="alert" className="text-sm text-red-400">Failed to load: {error.message}</div>
+      <div role="alert" className="text-sm text-red-400">
+        Failed to load: {error.message}
+      </div>
     </CasinoShell>
   ),
   notFoundComponent: () => (
@@ -37,7 +39,11 @@ function CasinoAccountPage() {
   });
 
   if (q.isLoading || !q.data) {
-    return <CasinoShell><div className="text-sm text-muted-foreground">Loading…</div></CasinoShell>;
+    return (
+      <CasinoShell>
+        <div className="text-sm text-muted-foreground">Loading…</div>
+      </CasinoShell>
+    );
   }
 
   const data = q.data as any;
@@ -48,26 +54,36 @@ function CasinoAccountPage() {
 
   return (
     <CasinoShell>
-      <div className="mx-auto max-w-5xl">
+      <div className="animate-in fade-in duration-500 mx-auto max-w-5xl">
         <div className="mb-6 flex items-center justify-between gap-3">
           <div>
             <h1 className="flex items-center gap-2 font-display text-3xl font-bold">
               <Wallet className="h-7 w-7 text-gold" /> Casino Account
             </h1>
             <p className="text-sm text-muted-foreground">
-              Wallet spans poker & blackjack. Track deposits, debts and settle payments made off the platform.
+              Wallet spans poker & blackjack. Track deposits, debts and settle payments made off the
+              platform.
             </p>
           </div>
         </div>
 
         {/* Snapshot */}
         <div className="mb-6 grid gap-3 sm:grid-cols-2">
-          <SnapshotCard label="Chip balance" value={fmt(me.chips)} accent="gold" icon={<Coins className="h-4 w-4 text-gold" />} />
+          <SnapshotCard
+            label="Chip balance"
+            value={fmt(me.chips)}
+            accent="gold"
+            icon={<Coins className="h-4 w-4 text-gold" />}
+          />
           <SnapshotCard
             label="Total P&L"
             value={`${totalPL >= 0 ? "+" : ""}${fmt(totalPL)}`}
             accent={totalPL > 0 ? "green" : totalPL < 0 ? "red" : "muted"}
-            icon={<TrendingUp className={`h-4 w-4 ${totalPL >= 0 ? "text-emerald-400" : "text-red-400"}`} />}
+            icon={
+              <TrendingUp
+                className={`h-4 w-4 ${totalPL >= 0 ? "text-emerald-400" : "text-red-400"}`}
+              />
+            }
           />
         </div>
 
@@ -83,7 +99,8 @@ function CasinoAccountPage() {
         <section className="mb-8">
           <h2 className="mb-2 font-display text-lg font-semibold">Your deposit history</h2>
           <p className="mb-2 text-xs text-muted-foreground">
-            Chip buy-ins at the Cashier. These are not debts — real IOUs appear above once a session is closed.
+            Chip buy-ins at the Cashier. These are not debts — real IOUs appear above once a session
+            is closed.
           </p>
           <div className="card-felt shadow-card overflow-hidden rounded-2xl">
             <div className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-border/50 px-4 py-2 text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -99,14 +116,19 @@ function CasinoAccountPage() {
               return (
                 <div
                   key={t.id}
-                  className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b border-border/30 px-4 py-2 last:border-0 text-sm"
+                  className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b border-border/30 px-4 py-2 text-sm transition-colors duration-150 last:border-0 hover:bg-background/30"
                 >
                   <div className="min-w-0">
                     <div>{fmtDate(t.created_at)}</div>
-                    {t.note && <div className="truncate text-[11px] text-muted-foreground">{t.note}</div>}
+                    {t.note && (
+                      <div className="truncate text-[11px] text-muted-foreground">{t.note}</div>
+                    )}
                   </div>
-                  <div className={`text-right font-mono ${amt > 0 ? "text-emerald-400" : amt < 0 ? "text-red-400" : ""}`}>
-                    {amt > 0 ? "+" : ""}{fmt(amt)}
+                  <div
+                    className={`text-right font-mono ${amt > 0 ? "text-emerald-400" : amt < 0 ? "text-red-400" : ""}`}
+                  >
+                    {amt > 0 ? "+" : ""}
+                    {fmt(amt)}
                   </div>
                   <div className="text-right font-mono text-muted-foreground">
                     {t.balance_after != null ? fmt(Number(t.balance_after)) : "—"}
@@ -129,10 +151,15 @@ function CasinoAccountPage() {
               <div className="text-right">Deposits</div>
             </div>
             {otherPlayers.length === 0 && (
-              <div className="p-6 text-center text-sm text-muted-foreground">No other players yet.</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                No other players yet.
+              </div>
             )}
             {otherPlayers.map((p: any) => (
-              <div key={p.user_id} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b border-border/30 px-4 py-2 last:border-0 text-sm">
+              <div
+                key={p.user_id}
+                className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b border-border/30 px-4 py-2 text-sm transition-colors duration-150 last:border-0 hover:bg-background/30"
+              >
                 <div className="flex items-center gap-2 min-w-0">
                   {p.avatar_url ? (
                     <img src={p.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
@@ -144,12 +171,15 @@ function CasinoAccountPage() {
                   <span className="truncate">{formatDisplayName(p.name, p.nickname)}</span>
                 </div>
                 <div className="text-right font-mono">{fmt(p.chips)}</div>
-                <div className="text-right font-mono text-muted-foreground">{fmt(p.total_deposits)}</div>
+                <div className="text-right font-mono text-muted-foreground">
+                  {fmt(p.total_deposits)}
+                </div>
               </div>
             ))}
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            <strong>Chips</strong>: current wallet balance. <strong>Deposits</strong>: total Cashier buy-ins.
+            <strong>Chips</strong>: current wallet balance. <strong>Deposits</strong>: total Cashier
+            buy-ins.
           </p>
         </section>
       </div>
@@ -157,21 +187,31 @@ function CasinoAccountPage() {
   );
 }
 
-
 function SnapshotCard({
-  label, value, accent, icon,
-}: { label: string; value: string; accent: "gold" | "green" | "red" | "muted"; icon: React.ReactNode }) {
+  label,
+  value,
+  accent,
+  icon,
+}: {
+  label: string;
+  value: string;
+  accent: "gold" | "green" | "red" | "muted";
+  icon: React.ReactNode;
+}) {
   const tone =
-    accent === "gold" ? "text-gold"
-    : accent === "green" ? "text-emerald-400"
-    : accent === "red" ? "text-red-400"
-    : "text-muted-foreground";
+    accent === "gold"
+      ? "text-gold"
+      : accent === "green"
+        ? "text-emerald-400"
+        : accent === "red"
+          ? "text-red-400"
+          : "text-muted-foreground";
   return (
-    <div className="card-felt shadow-card rounded-2xl p-4">
+    <div className="card-felt shadow-card rounded-2xl p-4 transition-colors duration-200 hover:border-gold/25">
       <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
         {icon} {label}
       </div>
-      <div className={`mt-2 font-display text-3xl font-bold ${tone}`}>{value}</div>
+      <div className={`mt-2 font-display text-3xl font-bold tabular-nums ${tone}`}>{value}</div>
     </div>
   );
 }

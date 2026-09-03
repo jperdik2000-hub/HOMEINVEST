@@ -60,7 +60,7 @@ function NotificationsPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-2xl">
+      <div className="animate-in fade-in duration-500 mx-auto max-w-2xl">
         <div className="mb-4 flex items-center gap-2 font-display text-2xl font-bold">
           <Bell className="h-5 w-5 text-gold" /> Notifications
         </div>
@@ -80,8 +80,8 @@ function NotificationsPage() {
           {data?.map((n) => (
             <li
               key={n.id}
-              className={`card-felt shadow-card rounded-2xl p-4 ${
-                n.read_at ? "opacity-70" : ""
+              className={`card-felt shadow-card rounded-2xl p-4 transition-opacity duration-300 ${
+                n.read_at ? "opacity-70" : "border-l-2 border-l-gold"
               }`}
             >
               <div className="flex items-start justify-between gap-3">

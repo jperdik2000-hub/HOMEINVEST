@@ -14,7 +14,9 @@ export const Route = createFileRoute("/_authenticated/history")({
 
 function HistoryPage() {
   const [me, setMe] = useState<string | null>(null);
-  useEffect(() => { supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null)); }, []);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));
+  }, []);
 
   const q = useQuery({
     queryKey: ["history", me],
@@ -35,10 +37,9 @@ function HistoryPage() {
         .eq("host_id", uid);
       if (e2) throw e2;
 
-      const nightIds = Array.from(new Set([
-        ...(mine ?? []).map((r) => r.night_id),
-        ...(hosted ?? []).map((n) => n.id),
-      ]));
+      const nightIds = Array.from(
+        new Set([...(mine ?? []).map((r) => r.night_id), ...(hosted ?? []).map((n) => n.id)]),
+      );
       if (nightIds.length === 0) return [];
 
       const { data: nights, error: e3 } = await supabase
@@ -52,7 +53,10 @@ function HistoryPage() {
       const { data: allResults, error: e4 } = await supabase
         .from("player_results")
         .select("*")
-        .in("night_id", (nights ?? []).map((n) => n.id));
+        .in(
+          "night_id",
+          (nights ?? []).map((n) => n.id),
+        );
       if (e4) throw e4;
 
       return (nights ?? []).map((n) => ({
@@ -67,12 +71,14 @@ function HistoryPage() {
 
   return (
     <AppShell>
-      <div className="mb-6">
+      <div className="animate-in fade-in duration-500 mb-6">
         <h1 className="font-display text-3xl font-bold md:text-4xl">
           <History className="mr-2 inline h-7 w-7 text-gold" />
           Game history
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">Outcomes of every completed night you played in or hosted.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Outcomes of every completed night you played in or hosted.
+        </p>
       </div>
 
       {q.isLoading && <div className="text-muted-foreground">Loading…</div>}
@@ -82,16 +88,24 @@ function HistoryPage() {
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="animate-in fade-in duration-500 space-y-4">
         {q.data?.map(({ night, results, mine }) => (
-          <div key={night.id} className="card-felt shadow-card rounded-2xl p-5">
+          <div
+            key={night.id}
+            className="card-felt shadow-card rounded-2xl p-5 transition-colors duration-200 hover:border-gold/25"
+          >
             <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
               <div>
-                <Link to="/nights/$id" params={{ id: night.id }} className="font-display text-xl font-semibold hover:text-gold">
+                <Link
+                  to="/nights/$id"
+                  params={{ id: night.id }}
+                  className="font-display text-xl font-semibold hover:text-gold"
+                >
                   {night.title}
                 </Link>
                 <div className="text-xs text-muted-foreground">
-                  {formatEUDateTime(night.starts_at)}{night.location ? ` · ${night.location}` : ""}
+                  {formatEUDateTime(night.starts_at)}
+                  {night.location ? ` · ${night.location}` : ""}
                 </div>
                 <Link
                   to="/nights/$id/chat"
@@ -103,8 +117,15 @@ function HistoryPage() {
               </div>
               {mine && (
                 <div className="text-right">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Your result</div>
-                  <div className={"font-mono text-lg " + (Number(mine.net_result) >= 0 ? "text-emerald-400" : "text-red-400")}>
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Your result
+                  </div>
+                  <div
+                    className={
+                      "font-mono text-lg " +
+                      (Number(mine.net_result) >= 0 ? "text-emerald-400" : "text-red-400")
+                    }
+                  >
                     {formatMoney(Number(mine.net_result), night.currency)}
                   </div>
                   {mine.final_rank && <div className="text-xs text-gold">#{mine.final_rank}</div>}
@@ -117,13 +138,28 @@ function HistoryPage() {
             </div>
             <ol className="space-y-1 text-sm">
               {results.map((r, i) => (
-                <li key={r.id} className={"flex items-center justify-between rounded-md px-3 py-1.5 " + (r.user_id === me ? "bg-gold/10" : "bg-background/30")}>
+                <li
+                  key={r.id}
+                  className={
+                    "flex items-center justify-between rounded-md px-3 py-1.5 " +
+                    (r.user_id === me ? "bg-gold/10" : "bg-background/30")
+                  }
+                >
                   <div className="flex items-center gap-2">
                     <span className="text-gold">#{r.final_rank ?? i + 1}</span>
                     <PlayerLink userId={r.user_id} name={r.player_name} />
-                    {r.award && <span className="text-xs text-muted-foreground">· {AWARDS.find((a) => a.value === r.award)?.label}</span>}
+                    {r.award && (
+                      <span className="text-xs text-muted-foreground">
+                        · {AWARDS.find((a) => a.value === r.award)?.label}
+                      </span>
+                    )}
                   </div>
-                  <div className={"font-mono " + (Number(r.net_result) >= 0 ? "text-emerald-400" : "text-red-400")}>
+                  <div
+                    className={
+                      "font-mono " +
+                      (Number(r.net_result) >= 0 ? "text-emerald-400" : "text-red-400")
+                    }
+                  >
                     {formatMoney(Number(r.net_result), night.currency)}
                   </div>
                 </li>

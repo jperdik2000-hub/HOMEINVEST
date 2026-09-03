@@ -3,12 +3,38 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { formatMoney, AWARDS, formatEUDateTime, formatDisplayName, fetchProfiles } from "@/lib/poker";
+import {
+  formatMoney,
+  AWARDS,
+  formatEUDateTime,
+  formatDisplayName,
+  fetchProfiles,
+} from "@/lib/poker";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Calendar, MapPin, Coins, Users, Trash2, Trophy, Pencil, Plus, Minus, UserPlus, Play, MessageSquare, Tv } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Coins,
+  Users,
+  Trash2,
+  Trophy,
+  Pencil,
+  Plus,
+  Minus,
+  UserPlus,
+  Play,
+  MessageSquare,
+  Tv,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { listInviteProfiles } from "@/lib/invite-profiles.functions";
@@ -26,21 +52,30 @@ export const Route = createFileRoute("/_authenticated/nights/$id")({
 function NightPage() {
   const { id } = Route.useParams();
   const hasChildMatch = useRouterState({
-    select: (state) => state.matches.some((match) =>
-      match.routeId === "/_authenticated/nights/$id/edit" ||
-      match.routeId === "/_authenticated/nights/$id/results" ||
-      match.routeId === "/_authenticated/nights/$id/chat",
-    ),
+    select: (state) =>
+      state.matches.some(
+        (match) =>
+          match.routeId === "/_authenticated/nights/$id/edit" ||
+          match.routeId === "/_authenticated/nights/$id/results" ||
+          match.routeId === "/_authenticated/nights/$id/chat",
+      ),
   });
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [me, setMe] = useState<string | null>(null);
-  useEffect(() => { supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null)); }, []);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));
+  }, []);
   const isAdminQ = useQuery({
     queryKey: ["is-admin", me],
     enabled: !!me,
     queryFn: async () => {
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", me!).eq("role", "admin").maybeSingle();
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", me!)
+        .eq("role", "admin")
+        .maybeSingle();
       return !!data;
     },
   });
@@ -56,7 +91,9 @@ function NightPage() {
       else toast.success(`Reminder sent to ${res.targets} invitee${res.targets === 1 ? "" : "s"}.`);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to send reminder");
-    } finally { setReminding(false); }
+    } finally {
+      setReminding(false);
+    }
   }
 
   const night = useQuery({
@@ -86,7 +123,11 @@ function NightPage() {
   const results = useQuery({
     queryKey: ["night-results", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("player_results").select("*").eq("night_id", id).order("final_rank", { nullsFirst: false });
+      const { data, error } = await supabase
+        .from("player_results")
+        .select("*")
+        .eq("night_id", id)
+        .order("final_rank", { nullsFirst: false });
       if (error) throw error;
       return data ?? [];
     },
@@ -101,8 +142,18 @@ function NightPage() {
     return r?.name || r?.email || "Player";
   };
 
-  if (night.isLoading) return <AppShell><div className="text-muted-foreground">Loading…</div></AppShell>;
-  if (!night.data) return <AppShell><div>Not found.</div></AppShell>;
+  if (night.isLoading)
+    return (
+      <AppShell>
+        <div className="text-muted-foreground">Loading…</div>
+      </AppShell>
+    );
+  if (!night.data)
+    return (
+      <AppShell>
+        <div>Not found.</div>
+      </AppShell>
+    );
 
   const n = night.data;
   const isHost = me === n.host_id;
@@ -117,10 +168,20 @@ function NightPage() {
   async function setRsvp(status: "attending" | "maybe" | "declined") {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return;
-    const { error } = await supabase.from("rsvps").upsert({
-      night_id: id, user_id: user.user.id, email: user.user.email!, name: (user.user.user_metadata?.name as string) ?? user.user.email, status,
-    }, { onConflict: "night_id,email" });
-    if (error) { toast.error(error.message); return; }
+    const { error } = await supabase.from("rsvps").upsert(
+      {
+        night_id: id,
+        user_id: user.user.id,
+        email: user.user.email!,
+        name: (user.user.user_metadata?.name as string) ?? user.user.email,
+        status,
+      },
+      { onConflict: "night_id,email" },
+    );
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("RSVP saved");
     qc.invalidateQueries({ queryKey: ["rsvps", id] });
   }
@@ -129,15 +190,21 @@ function NightPage() {
     person: { user_id: string; email: string; name: string },
     status: "attending" | "maybe" | "declined",
   ) {
-    const { error } = await supabase.from("rsvps").upsert(
-      { night_id: id, user_id: person.user_id, email: person.email, name: person.name, status },
-      { onConflict: "night_id,email" },
+    const { error } = await supabase
+      .from("rsvps")
+      .upsert(
+        { night_id: id, user_id: person.user_id, email: person.email, name: person.name, status },
+        { onConflict: "night_id,email" },
+      );
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(
+      `${person.name} marked ${status === "attending" ? "in" : status === "maybe" ? "maybe" : "can't play"}`,
     );
-    if (error) { toast.error(error.message); return; }
-    toast.success(`${person.name} marked ${status === "attending" ? "in" : status === "maybe" ? "maybe" : "can't play"}`);
     qc.invalidateQueries({ queryKey: ["rsvps", id] });
   }
-
 
   async function deleteNight() {
     if (!confirm("Permanently delete this poker game? Stats will not be saved.")) return;
@@ -153,7 +220,10 @@ function NightPage() {
   }
 
   async function startGame() {
-    const { error } = await supabase.from("poker_nights").update({ started_at: new Date().toISOString() }).eq("id", id);
+    const { error } = await supabase
+      .from("poker_nights")
+      .update({ started_at: new Date().toISOString() })
+      .eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Game started");
     qc.invalidateQueries({ queryKey: ["night", id] });
@@ -177,38 +247,64 @@ function NightPage() {
     .filter((r: any) => !rsvpNames.has((r.player_name || "").toLowerCase()))
     .map((r: any) => ({ id: `walkin-${r.id}`, name: r.player_name, email: null, isWalkIn: true }));
   const attending = [...attendingWithNames, ...walkIns];
-  const maybe = (rsvps.data?.filter((r) => r.status === "maybe") ?? []).map((r: any) => ({ ...r, name: displayNameFor(r) }));
-  const declined = (rsvps.data?.filter((r) => r.status === "declined") ?? []).map((r: any) => ({ ...r, name: displayNameFor(r) }));
+  const maybe = (rsvps.data?.filter((r) => r.status === "maybe") ?? []).map((r: any) => ({
+    ...r,
+    name: displayNameFor(r),
+  }));
+  const declined = (rsvps.data?.filter((r) => r.status === "declined") ?? []).map((r: any) => ({
+    ...r,
+    name: displayNameFor(r),
+  }));
 
-  const rsvpByUserId = new Map((rsvps.data ?? []).filter((r: any) => r.user_id).map((r: any) => [r.user_id, r.status]));
+  const rsvpByUserId = new Map(
+    (rsvps.data ?? []).filter((r: any) => r.user_id).map((r: any) => [r.user_id, r.status]),
+  );
   const pendingInvitees = (invites.data ?? [])
     .filter((i: any) => i.invited_user_id && !rsvpByUserId.has(i.invited_user_id))
     .map((i: any) => ({
       id: `inv-${i.id}`,
       inviteId: i.id,
-      name: displayNameFor({ user_id: i.invited_user_id, name: i.invited_name, email: i.invited_email })
-        || (i.invited_email ? i.invited_email.split("@")[0] : "Invited"),
+      name:
+        displayNameFor({
+          user_id: i.invited_user_id,
+          name: i.invited_name,
+          email: i.invited_email,
+        }) || (i.invited_email ? i.invited_email.split("@")[0] : "Invited"),
       email: i.invited_email,
     }));
   const reminderTargets = (invites.data ?? [])
-    .filter((i: any) => i.invited_user_id && (!rsvpByUserId.has(i.invited_user_id) || rsvpByUserId.get(i.invited_user_id) === "maybe"))
+    .filter(
+      (i: any) =>
+        i.invited_user_id &&
+        (!rsvpByUserId.has(i.invited_user_id) || rsvpByUserId.get(i.invited_user_id) === "maybe"),
+    )
     .map((i: any) => ({
       id: `inv-${i.id}`,
-      name: displayNameFor({ user_id: i.invited_user_id, name: i.invited_name, email: i.invited_email })
-        || (i.invited_email ? i.invited_email.split("@")[0] : "Invited"),
+      name:
+        displayNameFor({
+          user_id: i.invited_user_id,
+          name: i.invited_name,
+          email: i.invited_email,
+        }) || (i.invited_email ? i.invited_email.split("@")[0] : "Invited"),
       email: i.invited_email,
     }));
 
   const manualPeople = (() => {
-    const map = new Map<string, { user_id: string; email: string; name: string; status: string | null }>();
+    const map = new Map<
+      string,
+      { user_id: string; email: string; name: string; status: string | null }
+    >();
     for (const i of (invites.data ?? []) as any[]) {
       if (!i.invited_user_id) continue;
       map.set(i.invited_user_id, {
         user_id: i.invited_user_id,
         email: i.invited_email,
         name:
-          displayNameFor({ user_id: i.invited_user_id, name: i.invited_name, email: i.invited_email }) ||
-          (i.invited_email ? i.invited_email.split("@")[0] : "Invited"),
+          displayNameFor({
+            user_id: i.invited_user_id,
+            name: i.invited_name,
+            email: i.invited_email,
+          }) || (i.invited_email ? i.invited_email.split("@")[0] : "Invited"),
         status: rsvpByUserId.get(i.invited_user_id) ?? null,
       });
     }
@@ -250,57 +346,109 @@ function NightPage() {
 
   return (
     <AppShell>
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-start sm:justify-between">
+      <div className="animate-in fade-in duration-500 mb-6 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-start sm:justify-between">
         <div className="min-w-0 sm:flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <h1 className="font-display min-w-0 flex-1 truncate text-2xl font-bold sm:text-3xl md:text-4xl">{n.title}</h1>
+            <h1 className="font-display min-w-0 flex-1 truncate text-2xl font-bold sm:text-3xl md:text-4xl">
+              {n.title}
+            </h1>
             <div className="flex shrink-0 items-center gap-2">
               {isHost && n.status !== "cancelled" && (
                 <>
                   <Button asChild variant="outline" size="sm">
-                    <Link to="/nights/$id/edit" params={{ id }}><Pencil className="mr-1 h-4 w-4"/>Edit</Link>
+                    <Link to="/nights/$id/edit" params={{ id }}>
+                      <Pencil className="mr-1 h-4 w-4" />
+                      Edit
+                    </Link>
                   </Button>
-                  <Button variant="outline" size="sm" onClick={deleteNight}><Trash2 className="mr-1 h-4 w-4"/>Delete</Button>
+                  <Button variant="outline" size="sm" onClick={deleteNight}>
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Delete
+                  </Button>
                 </>
               )}
             </div>
           </div>
           <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1"><Calendar className="h-4 w-4 text-gold"/>{formatEUDateTime(n.starts_at)}</span>
-            {n.location && <span className="flex items-center gap-1"><MapPin className="h-4 w-4 text-gold"/>{n.location}</span>}
-            <span className="flex items-center gap-1"><Coins className="h-4 w-4 text-gold"/>{formatMoney(Number(n.buy_in), n.currency)} buy-in</span>
+            <span className="flex items-center gap-1">
+              <Calendar className="h-4 w-4 text-gold" />
+              {formatEUDateTime(n.starts_at)}
+            </span>
+            {n.location && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-4 w-4 text-gold" />
+                {n.location}
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              <Coins className="h-4 w-4 text-gold" />
+              {formatMoney(Number(n.buy_in), n.currency)} buy-in
+            </span>
             <span className="rounded bg-gold/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-gold">
               {isTourney ? "Tournament" : "Cash game"}
             </span>
             {isTourney && (
               <span className="flex items-center gap-1">
-                <span className="font-mono text-gold">{Number((n as any).starting_stack || 0).toLocaleString()}</span> starting chips
+                <span className="font-mono text-gold">
+                  {Number((n as any).starting_stack || 0).toLocaleString()}
+                </span>{" "}
+                starting chips
               </span>
             )}
             {Number((n as any).buy_in_chips) > 0 && (
               <span className="flex items-center gap-1 text-muted-foreground">
-                = <span className="font-mono text-gold">{Number((n as any).buy_in_chips).toLocaleString()}</span> chips
+                ={" "}
+                <span className="font-mono text-gold">
+                  {Number((n as any).buy_in_chips).toLocaleString()}
+                </span>{" "}
+                chips
               </span>
             )}
           </div>
-          {n.status === "cancelled" && <div className="mt-2 inline-block rounded bg-destructive/20 px-2 py-1 text-xs text-destructive">Cancelled</div>}
-          {n.status === "completed" && <div className="mt-2 inline-block rounded bg-emerald-500/20 px-2 py-1 text-xs text-emerald-400">Completed</div>}
+          {n.status === "cancelled" && (
+            <div className="mt-2 inline-block rounded bg-destructive/20 px-2 py-1 text-xs text-destructive">
+              Cancelled
+            </div>
+          )}
+          {n.status === "completed" && (
+            <div className="mt-2 inline-block rounded bg-emerald-500/20 px-2 py-1 text-xs text-emerald-400">
+              Completed
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => { navigator.clipboard.writeText(shareUrl); toast.success("Link copied"); }}>Copy link</Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              navigator.clipboard.writeText(shareUrl);
+              toast.success("Link copied");
+            }}
+          >
+            Copy link
+          </Button>
           <Button asChild variant="outline">
-            <Link to="/nights/$id/chat" params={{ id }}><MessageSquare className="mr-1 h-4 w-4"/>Chat</Link>
+            <Link to="/nights/$id/chat" params={{ id }}>
+              <MessageSquare className="mr-1 h-4 w-4" />
+              Chat
+            </Link>
           </Button>
           {canEditRebuys && (
             <Button asChild variant="outline">
-              <Link to="/game/$gameId/tv-control" params={{ gameId: id }}><Tv className="mr-1 h-4 w-4"/>Connect to TV</Link>
+              <Link to="/game/$gameId/tv-control" params={{ gameId: id }}>
+                <Tv className="mr-1 h-4 w-4" />
+                Connect to TV
+              </Link>
             </Button>
           )}
           {isHost && n.status !== "cancelled" && (
             <>
               {!startedAt && n.status !== "completed" && (
-                <Button className="bg-emerald-500 hover:bg-emerald-500/90 text-white" onClick={startGame}>
-                  <Play className="mr-1 h-4 w-4"/>Start game
+                <Button
+                  className="bg-emerald-500 hover:bg-emerald-500/90 text-white"
+                  onClick={startGame}
+                >
+                  <Play className="mr-1 h-4 w-4" />
+                  Start game
                 </Button>
               )}
               {startedAt && n.status !== "completed" && (
@@ -310,7 +458,10 @@ function NightPage() {
               )}
               {startedAt && (
                 <Button asChild className="bg-gold shadow-gold">
-                  <Link to="/nights/$id/results" params={{ id }}><Trophy className="mr-1 h-4 w-4"/>Log results</Link>
+                  <Link to="/nights/$id/results" params={{ id }}>
+                    <Trophy className="mr-1 h-4 w-4" />
+                    Log results
+                  </Link>
                 </Button>
               )}
             </>
@@ -320,7 +471,9 @@ function NightPage() {
 
       {n.notes && (
         <div className="card-felt mb-6 rounded-2xl p-4 text-sm">
-          <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Notes from the host</div>
+          <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
+            Notes from the host
+          </div>
           <div className="whitespace-pre-wrap">{n.notes}</div>
         </div>
       )}
@@ -328,7 +481,6 @@ function NightPage() {
       {isLive && <GameBreakBanner nightId={id} canManage={canManage} />}
 
       <Tabs defaultValue={defaultTab}>
-
         <TabsList className="mb-4">
           {isTourney && <TabsTrigger value="tournament">Tournament</TabsTrigger>}
           {isLive && !isTourney && <TabsTrigger value="playing">Playing now</TabsTrigger>}
@@ -337,141 +489,232 @@ function NightPage() {
         </TabsList>
 
         <TabsContent value="details">
-        <div className="grid gap-4 lg:grid-cols-3">
-        <div className="card-felt shadow-card rounded-2xl p-5 lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="font-display text-lg font-semibold"><Users className="mr-1 inline h-4 w-4 text-gold"/>Attending ({attending.length})</div>
-            {n.status !== "cancelled" && !startedAt && n.status !== "completed" && (
-              <div className="flex gap-1">
-                <Button size="sm" variant={myRsvp?.status === "attending" ? "default" : "outline"} onClick={() => setRsvp("attending")} className={myRsvp?.status === "attending" ? "bg-gold" : ""}>I'm in</Button>
-                <Button size="sm" variant={myRsvp?.status === "maybe" ? "default" : "outline"} onClick={() => setRsvp("maybe")}>Maybe</Button>
-                <Button size="sm" variant={myRsvp?.status === "declined" ? "default" : "outline"} onClick={() => setRsvp("declined")}>Can't</Button>
-              </div>
-            )}
-          </div>
-          {canManage && n.status !== "cancelled" && (
-            <div className="mt-4 rounded-xl border border-gold/25 bg-background/40 p-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-gold">Answer for a player</div>
-              <div className="mt-1 text-[11px] text-muted-foreground">
-                For players who tell you in person instead of using the app.
-              </div>
-              <div className="mt-3 grid gap-3">
-                {manualPeople.length === 0 ? (
-                  <div className="text-xs text-muted-foreground">No invited players yet — invite players first.</div>
-                ) : (
-                  <>
-                    <Select
-                      value={selectedResponder}
-                      onValueChange={setSelectedResponder}
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="card-felt shadow-card rounded-2xl p-5 lg:col-span-2">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="font-display text-lg font-semibold">
+                  <Users className="mr-1 inline h-4 w-4 text-gold" />
+                  Attending ({attending.length})
+                </div>
+                {n.status !== "cancelled" && !startedAt && n.status !== "completed" && (
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant={myRsvp?.status === "attending" ? "default" : "outline"}
+                      onClick={() => setRsvp("attending")}
+                      className={myRsvp?.status === "attending" ? "bg-gold" : ""}
                     >
-                      <SelectTrigger className="w-full bg-background/60">
-                        <SelectValue placeholder="Select a player…" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {manualPeople.map((p) => (
-                          <SelectItem key={p.user_id} value={p.user_id}>
-                            {p.name} {p.status ? `(${p.status})` : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {selectedPerson && (
-                      <div className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-background/60 p-2">
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{selectedPerson.name}</span>
-                        <div className="flex shrink-0 gap-1">
-                          <Button
-                            size="sm"
-                            variant={selectedPerson.status === "attending" ? "default" : "outline"}
-                            className={selectedPerson.status === "attending" ? "bg-gold" : ""}
-                            onClick={() => setRsvpFor(selectedPerson, "attending")}
-                          >
-                            In
-                          </Button>
-                          <Button size="sm" variant={selectedPerson.status === "maybe" ? "default" : "outline"} onClick={() => setRsvpFor(selectedPerson, "maybe")}>
-                            Maybe
-                          </Button>
-                          <Button size="sm" variant={selectedPerson.status === "declined" ? "default" : "outline"} onClick={() => setRsvpFor(selectedPerson, "declined")}>
-                            Can't
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </>
+                      I'm in
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={myRsvp?.status === "maybe" ? "default" : "outline"}
+                      onClick={() => setRsvp("maybe")}
+                    >
+                      Maybe
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={myRsvp?.status === "declined" ? "default" : "outline"}
+                      onClick={() => setRsvp("declined")}
+                    >
+                      Can't
+                    </Button>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
-          <RsvpList title="Attending" items={attending} canRemove={canManage} onRemove={removeRsvp} />
-          <RsvpList title="Maybe" items={maybe} canRemove={canManage} onRemove={removeRsvp} />
-          <RsvpList title="Declined" items={declined} canRemove={canManage} onRemove={removeRsvp} />
-          <RsvpList title="Invited (no reply yet)" items={pendingInvitees} canRemove={canManage} onRemove={(_, item) => removeInvitation(item.inviteId)} />
-
-          {isAdmin && reminderTargets.length > 0 && (
-            <Button size="sm" variant="outline" onClick={sendPendingReminders} disabled={reminding} className="mt-1">
-              {reminding ? "Sending…" : `Remind ${reminderTargets.length} pending/maybe`}
-            </Button>
-          )}
-          {invites.data && invites.data.length > 0 && (
-            <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-              {invites.data.length} invitation{invites.data.length === 1 ? "" : "s"} sent
-            </div>
-          )}
-          {isHost && (
-            <InviteRegisteredFriends
-              nightId={id}
-              startsAt={n.starts_at}
-              title={n.title}
-              location={n.location}
-              buyIn={n.buy_in != null ? formatMoney(Number(n.buy_in), n.currency) : null}
-              existingInviteeIds={new Set((invites.data ?? []).map((i: any) => i.invited_user_id).filter(Boolean))}
-              attendingUserIds={new Set(attendingRsvps.map((r: any) => r.user_id).filter(Boolean))}
-            />
-          )}
-        </div>
-
-        <div className="card-felt shadow-card rounded-2xl p-5">
-          <div className="mb-3 font-display text-lg font-semibold"><Trophy className="mr-1 inline h-4 w-4 text-gold"/>Results</div>
-          {results.data && results.data.length > 0 ? (
-            <ol className="space-y-2 text-sm">
-              {results.data.map((r: any, i: number) => (
-                <li key={r.id} className="flex items-center justify-between rounded-md bg-background/30 px-3 py-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gold">#{r.final_rank ?? i + 1}</span>
-                      <span>{r.player_name}</span>
-                    </div>
-                    {isAdmin ? (
-                      <select
-                        className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-xs"
-                        value={r.award ?? ""}
-                        onChange={async (e) => {
-                          const value = e.target.value || null;
-                          const { error } = await supabase.from("player_results").update({ award: value }).eq("id", r.id);
-                          if (error) { toast.error(error.message); return; }
-                          toast.success("Award updated");
-                          qc.invalidateQueries({ queryKey: ["night-results", id] });
-                          qc.invalidateQueries({ queryKey: ["results"] });
-                        }}
-                      >
-                        <option value="">No award</option>
-                        {AWARDS.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
-                      </select>
+              {canManage && n.status !== "cancelled" && (
+                <div className="mt-4 rounded-xl border border-gold/25 bg-background/40 p-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gold">
+                    Answer for a player
+                  </div>
+                  <div className="mt-1 text-[11px] text-muted-foreground">
+                    For players who tell you in person instead of using the app.
+                  </div>
+                  <div className="mt-3 grid gap-3">
+                    {manualPeople.length === 0 ? (
+                      <div className="text-xs text-muted-foreground">
+                        No invited players yet — invite players first.
+                      </div>
                     ) : (
-                      r.award && <div className="text-xs text-muted-foreground">{AWARDS.find(a => a.value === r.award)?.label}</div>
+                      <>
+                        <Select value={selectedResponder} onValueChange={setSelectedResponder}>
+                          <SelectTrigger className="w-full bg-background/60">
+                            <SelectValue placeholder="Select a player…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {manualPeople.map((p) => (
+                              <SelectItem key={p.user_id} value={p.user_id}>
+                                {p.name} {p.status ? `(${p.status})` : ""}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {selectedPerson && (
+                          <div className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-background/60 p-2">
+                            <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                              {selectedPerson.name}
+                            </span>
+                            <div className="flex shrink-0 gap-1">
+                              <Button
+                                size="sm"
+                                variant={
+                                  selectedPerson.status === "attending" ? "default" : "outline"
+                                }
+                                className={selectedPerson.status === "attending" ? "bg-gold" : ""}
+                                onClick={() => setRsvpFor(selectedPerson, "attending")}
+                              >
+                                In
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={selectedPerson.status === "maybe" ? "default" : "outline"}
+                                onClick={() => setRsvpFor(selectedPerson, "maybe")}
+                              >
+                                Maybe
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={
+                                  selectedPerson.status === "declined" ? "default" : "outline"
+                                }
+                                onClick={() => setRsvpFor(selectedPerson, "declined")}
+                              >
+                                Can't
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
-                  <div className={"font-mono " + (Number(r.net_result) >= 0 ? "text-emerald-400" : "text-red-400")}>{formatMoney(Number(r.net_result), n.currency)}</div>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <div className="rounded-md border border-dashed border-border/60 p-3 text-center text-sm text-muted-foreground">No results yet.</div>
-          )}
-        </div>
-        </div>
-        <div className="mt-4">
-          <DebtLedger nightId={id} currency={n.currency} isHost={isHost} currentUserId={me} />
-        </div>
+                </div>
+              )}
+              <RsvpList
+                title="Attending"
+                items={attending}
+                canRemove={canManage}
+                onRemove={removeRsvp}
+              />
+              <RsvpList title="Maybe" items={maybe} canRemove={canManage} onRemove={removeRsvp} />
+              <RsvpList
+                title="Declined"
+                items={declined}
+                canRemove={canManage}
+                onRemove={removeRsvp}
+              />
+              <RsvpList
+                title="Invited (no reply yet)"
+                items={pendingInvitees}
+                canRemove={canManage}
+                onRemove={(_, item) => removeInvitation(item.inviteId)}
+              />
+
+              {isAdmin && reminderTargets.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={sendPendingReminders}
+                  disabled={reminding}
+                  className="mt-1"
+                >
+                  {reminding ? "Sending…" : `Remind ${reminderTargets.length} pending/maybe`}
+                </Button>
+              )}
+              {invites.data && invites.data.length > 0 && (
+                <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                  {invites.data.length} invitation{invites.data.length === 1 ? "" : "s"} sent
+                </div>
+              )}
+              {isHost && (
+                <InviteRegisteredFriends
+                  nightId={id}
+                  startsAt={n.starts_at}
+                  title={n.title}
+                  location={n.location}
+                  buyIn={n.buy_in != null ? formatMoney(Number(n.buy_in), n.currency) : null}
+                  existingInviteeIds={
+                    new Set((invites.data ?? []).map((i: any) => i.invited_user_id).filter(Boolean))
+                  }
+                  attendingUserIds={
+                    new Set(attendingRsvps.map((r: any) => r.user_id).filter(Boolean))
+                  }
+                />
+              )}
+            </div>
+
+            <div className="card-felt shadow-card rounded-2xl p-5">
+              <div className="mb-3 font-display text-lg font-semibold">
+                <Trophy className="mr-1 inline h-4 w-4 text-gold" />
+                Results
+              </div>
+              {results.data && results.data.length > 0 ? (
+                <ol className="space-y-2 text-sm">
+                  {results.data.map((r: any, i: number) => (
+                    <li
+                      key={r.id}
+                      className="flex items-center justify-between rounded-md bg-background/30 px-3 py-2"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gold">#{r.final_rank ?? i + 1}</span>
+                          <span>{r.player_name}</span>
+                        </div>
+                        {isAdmin ? (
+                          <select
+                            className="mt-1 rounded-md border border-input bg-background px-2 py-1 text-xs"
+                            value={r.award ?? ""}
+                            onChange={async (e) => {
+                              const value = e.target.value || null;
+                              const { error } = await supabase
+                                .from("player_results")
+                                .update({ award: value })
+                                .eq("id", r.id);
+                              if (error) {
+                                toast.error(error.message);
+                                return;
+                              }
+                              toast.success("Award updated");
+                              qc.invalidateQueries({ queryKey: ["night-results", id] });
+                              qc.invalidateQueries({ queryKey: ["results"] });
+                            }}
+                          >
+                            <option value="">No award</option>
+                            {AWARDS.map((a) => (
+                              <option key={a.value} value={a.value}>
+                                {a.label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          r.award && (
+                            <div className="text-xs text-muted-foreground">
+                              {AWARDS.find((a) => a.value === r.award)?.label}
+                            </div>
+                          )
+                        )}
+                      </div>
+                      <div
+                        className={
+                          "font-mono " +
+                          (Number(r.net_result) >= 0 ? "text-emerald-400" : "text-red-400")
+                        }
+                      >
+                        {formatMoney(Number(r.net_result), n.currency)}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <div className="rounded-md border border-dashed border-border/60 p-3 text-center text-sm text-muted-foreground">
+                  No results yet.
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="mt-4">
+            <DebtLedger nightId={id} currency={n.currency} isHost={isHost} currentUserId={me} />
+          </div>
         </TabsContent>
 
         {isTourney && (
@@ -510,14 +753,27 @@ function NightPage() {
   );
 }
 
-function RsvpList({ title, items, canRemove, onRemove }: { title: string; items: any[]; canRemove?: boolean; onRemove?: (id: string, item: any) => void }) {
+function RsvpList({
+  title,
+  items,
+  canRemove,
+  onRemove,
+}: {
+  title: string;
+  items: any[];
+  canRemove?: boolean;
+  onRemove?: (id: string, item: any) => void;
+}) {
   if (!items.length) return null;
   return (
     <div className="mb-3">
       <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">{title}</div>
       <div className="flex flex-wrap gap-2">
         {items.map((r) => (
-          <span key={r.id} className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs">
+          <span
+            key={r.id}
+            className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs"
+          >
             {r.isWalkIn ? (
               <Link
                 to="/players/walkin/$name"
@@ -533,7 +789,9 @@ function RsvpList({ title, items, canRemove, onRemove }: { title: string; items:
             ) : (
               <>{r.name || r.email}</>
             )}
-            {r.isWalkIn && <span className="ml-1 text-[10px] uppercase tracking-wide text-gold">walk-in</span>}
+            {r.isWalkIn && (
+              <span className="ml-1 text-[10px] uppercase tracking-wide text-gold">walk-in</span>
+            )}
             {canRemove && !r.isWalkIn && onRemove && (
               <button
                 type="button"
@@ -551,9 +809,22 @@ function RsvpList({ title, items, canRemove, onRemove }: { title: string; items:
   );
 }
 
-function InviteRegisteredFriends({ nightId, startsAt, title, location, buyIn, existingInviteeIds, attendingUserIds }: {
-  nightId: string; startsAt: string; title: string; location: string | null;
-  buyIn: string | null; existingInviteeIds: Set<string>; attendingUserIds: Set<string>;
+function InviteRegisteredFriends({
+  nightId,
+  startsAt,
+  title,
+  location,
+  buyIn,
+  existingInviteeIds,
+  attendingUserIds,
+}: {
+  nightId: string;
+  startsAt: string;
+  title: string;
+  location: string | null;
+  buyIn: string | null;
+  existingInviteeIds: Set<string>;
+  attendingUserIds: Set<string>;
 }) {
   const qc = useQueryClient();
   const loadInviteProfiles = useServerFn(listInviteProfiles);
@@ -564,7 +835,12 @@ function InviteRegisteredFriends({ nightId, startsAt, title, location, buyIn, ex
   const [me, setMe] = useState<{ id: string; name?: string; email?: string } | null>(null);
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setMe({ id: data.user.id, name: data.user.user_metadata?.name as string | undefined, email: data.user.email ?? undefined });
+      if (data.user)
+        setMe({
+          id: data.user.id,
+          name: data.user.user_metadata?.name as string | undefined,
+          email: data.user.email ?? undefined,
+        });
     });
   }, []);
 
@@ -574,7 +850,8 @@ function InviteRegisteredFriends({ nightId, startsAt, title, location, buyIn, ex
 
   function toggle(id: string) {
     const n = new Set(selected);
-    if (n.has(id)) n.delete(id); else n.add(id);
+    if (n.has(id)) n.delete(id);
+    else n.add(id);
     setSelected(n);
   }
 
@@ -584,7 +861,10 @@ function InviteRegisteredFriends({ nightId, startsAt, title, location, buyIn, ex
     try {
       const chosen = available.filter((p) => selected.has(p.id));
       const rows = chosen.map((p) => ({
-        night_id: nightId, invited_user_id: p.id, invited_email: p.email, invited_name: p.name,
+        night_id: nightId,
+        invited_user_id: p.id,
+        invited_email: p.email,
+        invited_name: p.name,
       }));
       const { data: createdInvites, error } = await supabase
         .from("invitations")
@@ -593,37 +873,57 @@ function InviteRegisteredFriends({ nightId, startsAt, title, location, buyIn, ex
       if (error) throw error;
 
       const whenText = formatEUDateTime(startsAt);
-      toast.success(`${createdInvites?.length ?? 0} invite${(createdInvites?.length ?? 0) === 1 ? "" : "s"} sent.`);
+      toast.success(
+        `${createdInvites?.length ?? 0} invite${(createdInvites?.length ?? 0) === 1 ? "" : "s"} sent.`,
+      );
 
       try {
         await notifyInvites({ data: { nightId, userIds: chosen.map((p) => p.id), whenText } });
-      } catch (err) { console.warn("push notify failed", err); }
+      } catch (err) {
+        console.warn("push notify failed", err);
+      }
 
       setSelected(new Set());
       qc.invalidateQueries({ queryKey: ["invites", nightId] });
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to send invites");
-    } finally { setSending(false); }
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
     <div className="mt-4 border-t border-border/60 pt-3">
-      <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Invite registered members</div>
+      <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+        Invite registered members
+      </div>
       {profiles.isLoading ? (
         <div className="text-sm text-muted-foreground">Loading members…</div>
       ) : available.length === 0 ? (
-        <div className="text-sm text-muted-foreground">Everyone's already invited or attending.</div>
+        <div className="text-sm text-muted-foreground">
+          Everyone's already invited or attending.
+        </div>
       ) : (
         <>
           <div className="grid gap-1 rounded-md border border-border/60 bg-background/30 p-2 max-h-48 overflow-auto">
             {available.map((p) => (
-              <label key={p.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-background/40">
+              <label
+                key={p.id}
+                className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-background/40"
+              >
                 <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
-                <span className="text-sm">{formatDisplayName(p.name, p.nickname)} <span className="text-muted-foreground">· {p.email}</span></span>
+                <span className="text-sm">
+                  {formatDisplayName(p.name, p.nickname)}{" "}
+                  <span className="text-muted-foreground">· {p.email}</span>
+                </span>
               </label>
             ))}
           </div>
-          <Button onClick={sendInvites} disabled={sending || selected.size === 0} className="mt-2 bg-gold shadow-gold">
+          <Button
+            onClick={sendInvites}
+            disabled={sending || selected.size === 0}
+            className="mt-2 bg-gold shadow-gold"
+          >
             <UserPlus className="mr-1 h-4 w-4" />
             {sending ? "Sending…" : `Invite ${selected.size || ""} selected`.trim()}
           </Button>
@@ -633,7 +933,21 @@ function InviteRegisteredFriends({ nightId, startsAt, title, location, buyIn, ex
   );
 }
 
-function PlayingNow({ nightId, currency, profiles }: { nightId: string; currency: string; profiles: { id: string; name: string; nickname: string | null; email: string; avatar_url: string | null }[] }) {
+function PlayingNow({
+  nightId,
+  currency,
+  profiles,
+}: {
+  nightId: string;
+  currency: string;
+  profiles: {
+    id: string;
+    name: string;
+    nickname: string | null;
+    email: string;
+    avatar_url: string | null;
+  }[];
+}) {
   const qc = useQueryClient();
   const profileById = new Map(profiles.map((p) => [p.id, p]));
   const nameForRow = (r: any): string => {
@@ -646,7 +960,10 @@ function PlayingNow({ nightId, currency, profiles }: { nightId: string; currency
   const live = useQuery({
     queryKey: ["live-results", nightId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("player_results").select("*").eq("night_id", nightId);
+      const { data, error } = await supabase
+        .from("player_results")
+        .select("*")
+        .eq("night_id", nightId);
       if (error) throw error;
       return data ?? [];
     },
@@ -654,14 +971,29 @@ function PlayingNow({ nightId, currency, profiles }: { nightId: string; currency
   });
 
   useEffect(() => {
-    const ch = supabase.channel(`playing-${nightId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "player_results", filter: `night_id=eq.${nightId}` }, () => {
-        qc.invalidateQueries({ queryKey: ["live-results", nightId] });
-      }).subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const ch = supabase
+      .channel(`playing-${nightId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "player_results", filter: `night_id=eq.${nightId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["live-results", nightId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [nightId, qc]);
 
-  const rows = (live.data ?? []).slice().sort((a: any, b: any) => (Number(b.buy_in || 0) + Number(b.rebuys || 0)) - (Number(a.buy_in || 0) + Number(a.rebuys || 0)));
+  const rows = (live.data ?? [])
+    .slice()
+    .sort(
+      (a: any, b: any) =>
+        Number(b.buy_in || 0) +
+        Number(b.rebuys || 0) -
+        (Number(a.buy_in || 0) + Number(a.rebuys || 0)),
+    );
   const totalPot = rows.reduce((s, r) => s + Number(r.buy_in || 0) + Number(r.rebuys || 0), 0);
   const totalRebuys = rows.reduce((s, r) => s + Number(r.rebuys || 0), 0);
   const totalBuyIns = rows.reduce((s, r) => s + Number(r.buy_in || 0), 0);
@@ -689,7 +1021,9 @@ function PlayingNow({ nightId, currency, profiles }: { nightId: string; currency
           <div className="text-xs text-muted-foreground">Live · auto-updates</div>
         </div>
         {rows.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">Nobody is seated yet.</div>
+          <div className="rounded-md border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
+            Nobody is seated yet.
+          </div>
         ) : (
           <ul className="space-y-2">
             {rows.map((r: any) => {
@@ -697,11 +1031,18 @@ function PlayingNow({ nightId, currency, profiles }: { nightId: string; currency
               const rebuysAmt = Number(r.rebuys || 0);
               const total = buyIn + rebuysAmt;
               return (
-                <li key={r.id} className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 p-3">
+                <li
+                  key={r.id}
+                  className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 p-3"
+                >
                   <div>
                     <div className="font-medium">
                       {r.user_id ? (
-                        <Link to="/players/$id" params={{ id: r.user_id }} className="hover:text-gold">
+                        <Link
+                          to="/players/$id"
+                          params={{ id: r.user_id }}
+                          className="hover:text-gold"
+                        >
                           {nameForRow(r)}
                         </Link>
                       ) : (
@@ -714,11 +1055,18 @@ function PlayingNow({ nightId, currency, profiles }: { nightId: string; currency
                         </Link>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground">Buy-in {formatMoney(buyIn, currency)} · Re-buys {formatMoney(rebuysAmt, currency)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Buy-in {formatMoney(buyIn, currency)} · Re-buys{" "}
+                      {formatMoney(rebuysAmt, currency)}
+                    </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-display text-xl text-gold leading-none">{formatMoney(total, currency)}</div>
-                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">total in</div>
+                    <div className="font-display text-xl text-gold leading-none">
+                      {formatMoney(total, currency)}
+                    </div>
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      total in
+                    </div>
                   </div>
                 </li>
               );
@@ -730,20 +1078,71 @@ function PlayingNow({ nightId, currency, profiles }: { nightId: string; currency
   );
 }
 
-function LiveRebuyTrackerImpl({ nightId, defaultBuyIn, currency, canEdit, attendingRsvps, profiles, isHost, rebuyManagerId }: {
-  nightId: string; defaultBuyIn: number; currency: string; canEdit: boolean; attendingRsvps: any[];
-  profiles: { id: string; name: string; nickname: string | null; email: string; avatar_url: string | null }[];
-  isHost: boolean; rebuyManagerId: string | null;
+function LiveRebuyTrackerImpl({
+  nightId,
+  defaultBuyIn,
+  currency,
+  canEdit,
+  attendingRsvps,
+  profiles,
+  isHost,
+  rebuyManagerId,
+}: {
+  nightId: string;
+  defaultBuyIn: number;
+  currency: string;
+  canEdit: boolean;
+  attendingRsvps: any[];
+  profiles: {
+    id: string;
+    name: string;
+    nickname: string | null;
+    email: string;
+    avatar_url: string | null;
+  }[];
+  isHost: boolean;
+  rebuyManagerId: string | null;
 }) {
-  return <LiveRebuyTrackerBody nightId={nightId} defaultBuyIn={defaultBuyIn} currency={currency} canEdit={canEdit} attendingRsvps={attendingRsvps} profiles={profiles} isHost={isHost} rebuyManagerId={rebuyManagerId} />;
+  return (
+    <LiveRebuyTrackerBody
+      nightId={nightId}
+      defaultBuyIn={defaultBuyIn}
+      currency={currency}
+      canEdit={canEdit}
+      attendingRsvps={attendingRsvps}
+      profiles={profiles}
+      isHost={isHost}
+      rebuyManagerId={rebuyManagerId}
+    />
+  );
 }
 
 const LiveRebuyTracker = LiveRebuyTrackerImpl;
 
-function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attendingRsvps, profiles, isHost, rebuyManagerId }: {
-  nightId: string; defaultBuyIn: number; currency: string; canEdit: boolean; attendingRsvps: any[];
-  profiles: { id: string; name: string; nickname: string | null; email: string; avatar_url: string | null }[];
-  isHost: boolean; rebuyManagerId: string | null;
+function LiveRebuyTrackerBody({
+  nightId,
+  defaultBuyIn,
+  currency,
+  canEdit,
+  attendingRsvps,
+  profiles,
+  isHost,
+  rebuyManagerId,
+}: {
+  nightId: string;
+  defaultBuyIn: number;
+  currency: string;
+  canEdit: boolean;
+  attendingRsvps: any[];
+  profiles: {
+    id: string;
+    name: string;
+    nickname: string | null;
+    email: string;
+    avatar_url: string | null;
+  }[];
+  isHost: boolean;
+  rebuyManagerId: string | null;
 }) {
   const qc = useQueryClient();
   const [walkIn, setWalkIn] = useState("");
@@ -772,7 +1171,10 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
   };
 
   async function setManager(uid: string | null) {
-    const { error } = await supabase.from("poker_nights").update({ rebuy_manager_id: uid }).eq("id", nightId);
+    const { error } = await supabase
+      .from("poker_nights")
+      .update({ rebuy_manager_id: uid })
+      .eq("id", nightId);
     if (error) toast.error(error.message);
     else {
       toast.success(uid ? "Re-buy manager assigned" : "Re-buy manager cleared");
@@ -782,7 +1184,10 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
   const live = useQuery({
     queryKey: ["live-results", nightId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("player_results").select("*").eq("night_id", nightId);
+      const { data, error } = await supabase
+        .from("player_results")
+        .select("*")
+        .eq("night_id", nightId);
       if (error) throw error;
       return data ?? [];
     },
@@ -790,11 +1195,19 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
   });
 
   useEffect(() => {
-    const ch = supabase.channel(`live-${nightId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "player_results", filter: `night_id=eq.${nightId}` }, () => {
-        qc.invalidateQueries({ queryKey: ["live-results", nightId] });
-      }).subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const ch = supabase
+      .channel(`live-${nightId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "player_results", filter: `night_id=eq.${nightId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["live-results", nightId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [nightId, qc]);
 
   // Previously-used walk-in names across every night the user can see (RLS scoped).
@@ -833,7 +1246,12 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
     const existing = user_id ? byUser.get(user_id) : byName.get(name.toLowerCase());
     if (existing) return;
     const { error } = await supabase.from("player_results").insert({
-      night_id: nightId, user_id, player_name: name, buy_in: defaultBuyIn, rebuys: 0, cash_out: 0,
+      night_id: nightId,
+      user_id,
+      player_name: name,
+      buy_in: defaultBuyIn,
+      rebuys: 0,
+      cash_out: 0,
     });
     if (error) toast.error(error.message);
     else qc.invalidateQueries({ queryKey: ["live-results", nightId] });
@@ -843,7 +1261,10 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
     if (!canEdit) return;
     if (!Number.isFinite(amount) || amount === 0) return;
     const next = Math.max(0, Number(row.rebuys || 0) + amount);
-    const { error } = await supabase.from("player_results").update({ rebuys: next }).eq("id", row.id);
+    const { error } = await supabase
+      .from("player_results")
+      .update({ rebuys: next })
+      .eq("id", row.id);
     if (error) toast.error(error.message);
     else qc.invalidateQueries({ queryKey: ["live-results", nightId] });
   }
@@ -870,7 +1291,10 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
     setWalkIn("");
   }
 
-  const notJoined = attendingRsvps.filter((r) => !(r.user_id && byUser.has(r.user_id)) && !byName.has((r.name || r.email || "").toLowerCase()));
+  const notJoined = attendingRsvps.filter(
+    (r) =>
+      !(r.user_id && byUser.has(r.user_id)) && !byName.has((r.name || r.email || "").toLowerCase()),
+  );
   const totalRebuys = rows.reduce((s, r) => s + Number(r.rebuys || 0), 0);
   const totalPot = rows.reduce((s, r) => s + Number(r.buy_in || 0) + Number(r.rebuys || 0), 0);
 
@@ -879,10 +1303,17 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
       <div className="card-felt shadow-card rounded-2xl p-5 lg:col-span-2">
         <div className="mb-3 flex items-center justify-between">
           <div className="font-display text-lg font-semibold">At the table ({rows.length})</div>
-          <div className="text-xs text-muted-foreground">Buy-in {formatMoney(defaultBuyIn, currency)} · Re-buys {formatMoney(totalRebuys, currency)} · Pot {formatMoney(totalPot, currency)}</div>
+          <div className="text-xs text-muted-foreground">
+            Buy-in {formatMoney(defaultBuyIn, currency)} · Re-buys{" "}
+            {formatMoney(totalRebuys, currency)} · Pot {formatMoney(totalPot, currency)}
+          </div>
         </div>
 
-        {rows.length === 0 && <div className="rounded-md border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">Nobody at the table yet. Add players from the right.</div>}
+        {rows.length === 0 && (
+          <div className="rounded-md border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
+            Nobody at the table yet. Add players from the right.
+          </div>
+        )}
 
         <ul className="space-y-2">
           {rows.map((r) => {
@@ -902,7 +1333,11 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
                   <div className="min-w-[8rem]">
                     <div className="font-medium">
                       {r.user_id ? (
-                        <Link to="/players/$id" params={{ id: r.user_id }} className="hover:text-gold">
+                        <Link
+                          to="/players/$id"
+                          params={{ id: r.user_id }}
+                          className="hover:text-gold"
+                        >
                           {nameForRow(r)}
                         </Link>
                       ) : (
@@ -915,7 +1350,10 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
                         </Link>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground">Buy-in {formatMoney(buyIn, currency)} · Re-buys {formatMoney(rebuysAmt, currency)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Buy-in {formatMoney(buyIn, currency)} · Re-buys{" "}
+                      {formatMoney(rebuysAmt, currency)}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -928,15 +1366,43 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
                       value={inputVal}
                       disabled={!canEdit}
                       onChange={(e) => setRebuyInputs((s) => ({ ...s, [r.id]: e.target.value }))}
-                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          submit();
+                        }
+                      }}
                     />
-                    <Button size="icon" className="bg-gold" disabled={!canEdit || !inputVal || Number(inputVal) <= 0} onClick={submit}><Plus className="h-4 w-4"/></Button>
-                    <Button size="icon" variant="outline" disabled={!canEdit || rebuysAmt <= 0} onClick={() => resetRebuys(r)} title="Reset re-buys"><Minus className="h-4 w-4"/></Button>
+                    <Button
+                      size="icon"
+                      className="bg-gold"
+                      disabled={!canEdit || !inputVal || Number(inputVal) <= 0}
+                      onClick={submit}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      disabled={!canEdit || rebuysAmt <= 0}
+                      onClick={() => resetRebuys(r)}
+                      title="Reset re-buys"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
                     <div className="w-24 text-right">
-                      <div className="font-display text-xl text-gold leading-none">{formatMoney(total, currency)}</div>
-                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">total in</div>
+                      <div className="font-display text-xl text-gold leading-none">
+                        {formatMoney(total, currency)}
+                      </div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        total in
+                      </div>
                     </div>
-                    {canEdit && <Button size="icon" variant="ghost" onClick={() => removeRow(r)}><Trash2 className="h-4 w-4"/></Button>}
+                    {canEdit && (
+                      <Button size="icon" variant="ghost" onClick={() => removeRow(r)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </li>
@@ -946,12 +1412,23 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
       </div>
 
       <div className="card-felt shadow-card rounded-2xl p-5">
-        <div className="mb-3 font-display text-lg font-semibold"><UserPlus className="mr-1 inline h-4 w-4 text-gold"/>Add player</div>
-        {!canEdit && <div className="mb-3 rounded bg-muted/30 p-2 text-xs text-muted-foreground">Only the host or the assigned re-buy manager can update the live table.</div>}
+        <div className="mb-3 font-display text-lg font-semibold">
+          <UserPlus className="mr-1 inline h-4 w-4 text-gold" />
+          Add player
+        </div>
+        {!canEdit && (
+          <div className="mb-3 rounded bg-muted/30 p-2 text-xs text-muted-foreground">
+            Only the host or the assigned re-buy manager can update the live table.
+          </div>
+        )}
         {isHost && (
           <div className="mb-4 rounded-lg border border-border/60 bg-background/30 p-3">
-            <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Re-buy manager</div>
-            <div className="mb-2 text-xs text-muted-foreground">Delegate live re-buy edits to one attending player.</div>
+            <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
+              Re-buy manager
+            </div>
+            <div className="mb-2 text-xs text-muted-foreground">
+              Delegate live re-buy edits to one attending player.
+            </div>
             <div className="flex gap-2">
               <select
                 className="flex-1 rounded-md border border-border/60 bg-background/40 px-2 py-1 text-sm"
@@ -959,26 +1436,40 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
                 onChange={(e) => setManager(e.target.value || null)}
               >
                 <option value="">— No one (host only) —</option>
-                {attendingRsvps.filter((r) => r.user_id).map((r) => (
-                  <option key={r.id} value={r.user_id}>{nameForRsvp(r)}</option>
-                ))}
+                {attendingRsvps
+                  .filter((r) => r.user_id)
+                  .map((r) => (
+                    <option key={r.id} value={r.user_id}>
+                      {nameForRsvp(r)}
+                    </option>
+                  ))}
               </select>
               {rebuyManagerId && (
-                <Button size="sm" variant="outline" onClick={() => setManager(null)}>Clear</Button>
+                <Button size="sm" variant="outline" onClick={() => setManager(null)}>
+                  Clear
+                </Button>
               )}
             </div>
           </div>
         )}
         {!isHost && rebuyManagerId && canEdit && (
-          <div className="mb-3 rounded bg-gold/10 p-2 text-xs text-gold">The host has assigned you as re-buy manager.</div>
+          <div className="mb-3 rounded bg-gold/10 p-2 text-xs text-gold">
+            The host has assigned you as re-buy manager.
+          </div>
         )}
         {notJoined.length > 0 && (
           <div className="mb-4">
-            <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Attending — tap to seat</div>
+            <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
+              Attending — tap to seat
+            </div>
             <div className="flex flex-wrap gap-2">
               {notJoined.map((r) => (
-                <button key={r.id} disabled={!canEdit} onClick={() => joinPlayer(r.user_id ?? null, accountNameForRsvp(r))}
-                  className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs hover:bg-gold/20 disabled:opacity-50">
+                <button
+                  key={r.id}
+                  disabled={!canEdit}
+                  onClick={() => joinPlayer(r.user_id ?? null, accountNameForRsvp(r))}
+                  className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs hover:bg-gold/20 disabled:opacity-50"
+                >
                   + {nameForRsvp(r)}
                 </button>
               ))}
@@ -987,12 +1478,21 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
         )}
         <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Walk-in</div>
         <div className="flex gap-2">
-          <Input placeholder="Name" value={walkIn} onChange={(e) => setWalkIn(e.target.value)} disabled={!canEdit}/>
-          <Button onClick={addWalkIn} disabled={!canEdit || !walkIn.trim()} className="bg-gold"><Plus className="h-4 w-4"/></Button>
+          <Input
+            placeholder="Name"
+            value={walkIn}
+            onChange={(e) => setWalkIn(e.target.value)}
+            disabled={!canEdit}
+          />
+          <Button onClick={addWalkIn} disabled={!canEdit || !walkIn.trim()} className="bg-gold">
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
         {(() => {
           const seatedWalkNames = new Set(
-            rows.filter((r: any) => !r.user_id).map((r: any) => (r.player_name || "").trim().toLowerCase()),
+            rows
+              .filter((r: any) => !r.user_id)
+              .map((r: any) => (r.player_name || "").trim().toLowerCase()),
           );
           const suggestions = (pastWalkIns.data ?? []).filter(
             (w) => !seatedWalkNames.has(w.name.toLowerCase()),
@@ -1034,7 +1534,8 @@ function LiveRebuyTrackerBody({ nightId, defaultBuyIn, currency, canEdit, attend
           );
         })()}
         <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-          When the game ends, the host can finalize cash-outs from <span className="text-gold">Log results</span>. Re-buys entered here carry over.
+          When the game ends, the host can finalize cash-outs from{" "}
+          <span className="text-gold">Log results</span>. Re-buys entered here carry over.
         </div>
       </div>
     </div>
